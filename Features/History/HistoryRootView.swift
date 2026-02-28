@@ -140,9 +140,14 @@ struct HistoryRootView: View {
 
                 if groupedSessions.isEmpty {
                     Section("Sessions") {
-                        Text("No sessions match your filters yet.")
-                            .font(AppTheme.Typography.body)
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
+                        PlaceholderCard(
+                            title: completedSessions.isEmpty ? "No Sessions Yet" : "No Matches",
+                            message: completedSessions.isEmpty
+                                ? "Save your first workout in Log to build your history."
+                                : "No sessions match your selected filters."
+                        )
+                        .accessibilityIdentifier("history.empty.sessions")
+                        .listRowInsets(EdgeInsets())
                     }
                     .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
                 } else {

@@ -159,6 +159,7 @@ struct StatsRootView: View {
                 title: "No Completed Sessions Yet",
                 message: "Save your first workout in Log to unlock progress charts."
             )
+            .accessibilityIdentifier("stats.placeholder.noSessions")
         } else {
             switch dashboardState {
             case .loading:
@@ -168,12 +169,14 @@ struct StatsRootView: View {
                     title: "No Exercise Data",
                     message: "Add at least one set to an exercise to generate charts."
                 )
+                .accessibilityIdentifier("stats.placeholder.noExerciseData")
             case .ready(let snapshot):
                 if snapshot.performancePoints.isEmpty {
                     PlaceholderCard(
                         title: "No Data In Range",
                         message: "Try a longer date range or choose a different exercise."
                     )
+                    .accessibilityIdentifier("stats.placeholder.noDataInRange")
                 } else {
                     metricsSection(snapshot: snapshot)
                     topSetChart(snapshot: snapshot)
@@ -227,6 +230,7 @@ struct StatsRootView: View {
         }
         .padding(AppTheme.Spacing.large)
         .background(cardBackground)
+        .accessibilityIdentifier("stats.filters.card")
     }
 
     private var loadingCard: some View {

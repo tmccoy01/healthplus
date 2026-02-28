@@ -89,10 +89,12 @@ struct LogRootView: View {
         List {
             if activeWorkoutTypes.isEmpty {
                 Section {
-                    Text("Create at least one workout type in Settings before starting a session.")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                        .padding(.vertical, AppTheme.Spacing.small)
+                    PlaceholderCard(
+                        title: "No Workout Types",
+                        message: "Create at least one workout type in Settings before starting a session."
+                    )
+                    .accessibilityIdentifier("log.empty.noWorkoutTypes")
+                    .listRowInsets(EdgeInsets())
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
             } else {
@@ -263,10 +265,12 @@ struct SessionEditorView: View {
 
             if sortedEntries.isEmpty {
                 Section("Exercises") {
-                    Text("Add your first exercise to start logging sets.")
-                        .font(AppTheme.Typography.body)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                        .padding(.vertical, AppTheme.Spacing.small)
+                    PlaceholderCard(
+                        title: "No Exercises Yet",
+                        message: "Add your first exercise to start logging sets."
+                    )
+                    .accessibilityIdentifier("log.empty.noExercises")
+                    .listRowInsets(EdgeInsets())
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
             } else {

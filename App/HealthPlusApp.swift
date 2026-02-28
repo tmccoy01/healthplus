@@ -42,8 +42,9 @@ struct HealthPlusApp: App {
 
                     do {
                         try WorkoutTypeSeeder.seedIfNeeded(context: modelContainer.mainContext)
+                        _ = try Phase4DataIntegrityService.repair(context: modelContainer.mainContext)
                     } catch {
-                        assertionFailure("Workout type seeding failed: \(error)")
+                        assertionFailure("App startup data preparation failed: \(error)")
                     }
                 }
         }

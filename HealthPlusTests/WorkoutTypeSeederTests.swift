@@ -231,12 +231,53 @@ final class WorkoutSessionManagerTests: XCTestCase {
     func testFinishSessionSetsEndDate() throws {
         let store = try makeInMemoryStore()
         let context = store.context
-        let session = try WorkoutSessionManager.startSession(workoutType: nil, context: context)
-        let endedAt = Date(timeIntervalSince1970: 1_700_000_100)
+        let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = try WorkoutSessionManager.startSession(
+            workoutType: nil,
+            context: context,
+            startedAt: startedAt
+        )
+        let endedAt = startedAt.addingTimeInterval(100)
 
         try WorkoutSessionManager.finishSession(session, context: context, endedAt: endedAt)
 
         XCTAssertEqual(session.endedAt, endedAt)
+    }
+
+    func testFinishSessionClampsEndDateWhenProvidedDateIsBeforeStart() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let startedAt = Date(timeIntervalSince1970: 1_700_000_100)
+        let session = try WorkoutSessionManager.startSession(
+            workoutType: nil,
+            context: context,
+            startedAt: startedAt
+        )
+
+        try WorkoutSessionManager.finishSession(
+            session,
+            context: context,
+            endedAt: startedAt.addingTimeInterval(-300)
+        )
+
+        XCTAssertEqual(session.endedAt, startedAt)
+    }
+
+    func testAddSetSanitizesNegativeAndNonFiniteValues() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let session = try WorkoutSessionManager.startSession(workoutType: nil, context: context)
+        let entry = try WorkoutSessionManager.addExercise(to: session, name: "Row", context: context)
+
+        let set = try WorkoutSessionManager.addSet(
+            to: entry,
+            reps: -8,
+            weight: .infinity,
+            context: context
+        )
+
+        XCTAssertEqual(set.reps, 0)
+        XCTAssertEqual(set.weight, 0)
     }
 
     private struct InMemoryStore {
@@ -345,6 +386,109 @@ final class PreviousWeightLookupServiceTests: XCTestCase {
 
         let reference = try PreviousWeightLookupService.latestReference(for: "Row", context: context)
         XCTAssertNil(reference)
+    }
+
+    private struct InMemoryStore {
+        let container: ModelContainer
+        let context: ModelContext
+    }
+
+    private func makeInMemoryStore() throws -> InMemoryStore {
+        let schema = Schema([
+            WorkoutType.self,
+            ExerciseTemplate.self,
+            WorkoutSession.self,
+            ExerciseEntry.self,
+            SetEntry.self,
+            BodyMetric.self
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        return InMemoryStore(container: container, context: container.mainContext)
+    }
+}
+
+@MainActor
+final class Phase4DataIntegrityServiceTests: XCTestCase {
+    func testRepairNormalizesCorruptedSessionEntryAndSetData() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+
+        let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let session = WorkoutSession(
+            startedAt: startedAt,
+            endedAt: startedAt.addingTimeInterval(-120),
+            workoutType: nil,
+            sessionNotes: "  Heavy day  "
+        )
+        context.insert(session)
+
+        let entry = ExerciseEntry(
+            session: session,
+            exerciseName: "   ",
+            orderIndex: 9,
+            entryNotes: "  Keep elbows tight  "
+        )
+        context.insert(entry)
+        session.entries.append(entry)
+
+        let setA = SetEntry(
+            exerciseEntry: nil,
+            setIndex: 7,
+            reps: -5,
+            weight: -135,
+            isWarmup: true,
+            setNotes: "  Warmup set  ",
+            loggedAt: startedAt.addingTimeInterval(10)
+        )
+        let setB = SetEntry(
+            exerciseEntry: nil,
+            setIndex: 7,
+            reps: 6,
+            weight: 185,
+            isWarmup: false,
+            setNotes: "  Working set  ",
+            loggedAt: startedAt.addingTimeInterval(20)
+        )
+        context.insert(setA)
+        context.insert(setB)
+        entry.sets.append(setA)
+        entry.sets.append(setB)
+        try context.save()
+
+        let report = try Phase4DataIntegrityService.repair(context: context)
+        let orderedSets = WorkoutSessionManager.orderedSets(for: entry)
+
+        XCTAssertTrue(report.hasFixes)
+        XCTAssertEqual(session.sessionNotes, "Heavy day")
+        XCTAssertEqual(session.endedAt, startedAt)
+        XCTAssertEqual(entry.orderIndex, 0)
+        XCTAssertEqual(entry.exerciseName, "Untitled Exercise")
+        XCTAssertEqual(entry.entryNotes, "Keep elbows tight")
+
+        XCTAssertEqual(orderedSets.count, 2)
+        XCTAssertEqual(orderedSets[0].setIndex, 1)
+        XCTAssertEqual(orderedSets[0].reps, 0)
+        XCTAssertEqual(orderedSets[0].weight, 0)
+        XCTAssertEqual(orderedSets[0].setNotes, "Warmup set")
+        XCTAssertEqual(orderedSets[1].setIndex, 2)
+        XCTAssertEqual(orderedSets[1].setNotes, "Working set")
+    }
+
+    func testRepairDoesNothingForAlreadyCleanData() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+
+        let session = try WorkoutSessionManager.startSession(workoutType: nil, context: context)
+        let entry = try WorkoutSessionManager.addExercise(to: session, name: "Bench Press", context: context)
+        _ = try WorkoutSessionManager.addSet(to: entry, reps: 8, weight: 185, context: context)
+        try WorkoutSessionManager.finishSession(session, context: context)
+
+        let report = try Phase4DataIntegrityService.repair(context: context)
+
+        XCTAssertFalse(report.hasFixes)
+        XCTAssertEqual(report.sessionsTouched, 0)
+        XCTAssertEqual(report.totalFixes, 0)
     }
 
     private struct InMemoryStore {
@@ -512,6 +656,41 @@ final class ExerciseStatsEngineTests: XCTestCase {
             interval: nil
         )
         XCTAssertEqual(updated.trend, .up)
+    }
+
+    func testSnapshotPerformanceBaseline() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let exerciseName = "Bench Press"
+        let normalized = PreviousWeightLookupService.normalizeExerciseName(exerciseName)
+        let start = Date(timeIntervalSince1970: 1_680_000_000)
+
+        for index in 0..<80 {
+            let startedAt = start.addingTimeInterval(Double(index) * 3 * 24 * 60 * 60)
+            let baseWeight = 165 + Double(index % 12) * 2.5
+            try addCompletedSession(
+                startedAt: startedAt,
+                exerciseName: exerciseName,
+                sets: [(8, baseWeight), (6, baseWeight + 15)],
+                context: context
+            )
+        }
+
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let baseline = ExerciseStatsEngine.makeSnapshot(
+            sessions: sessions,
+            normalizedExerciseName: normalized,
+            interval: nil
+        )
+        XCTAssertEqual(baseline.performancePoints.count, 80)
+
+        measure {
+            _ = ExerciseStatsEngine.makeSnapshot(
+                sessions: sessions,
+                normalizedExerciseName: normalized,
+                interval: nil
+            )
+        }
     }
 
     private func addCompletedSession(

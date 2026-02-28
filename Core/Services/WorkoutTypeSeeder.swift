@@ -182,7 +182,8 @@ struct WorkoutSessionManager {
         context: ModelContext,
         endedAt: Date = .now
     ) throws {
-        session.endedAt = endedAt
+        // Guard against clock skew / imported bad data by never allowing an end date before start.
+        session.endedAt = max(session.startedAt, endedAt)
         try saveIfNeeded(context)
     }
 
@@ -255,7 +256,7 @@ struct WorkoutSessionManager {
             exerciseEntry: entry,
             setIndex: nextSetIndex,
             reps: max(0, reps),
-            weight: max(0, weight),
+            weight: sanitizeWeight(weight),
             isWarmup: isWarmup,
             setNotes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
             loggedAt: loggedAt
@@ -321,6 +322,155 @@ struct WorkoutSessionManager {
         if context.hasChanges {
             try context.save()
         }
+    }
+
+    private static func sanitizeWeight(_ value: Double) -> Double {
+        guard value.isFinite else {
+            return 0
+        }
+        return max(0, value)
+    }
+}
+
+struct Phase4DataIntegrityService {
+    struct RepairReport: Equatable {
+        var sessionsTouched = 0
+        var normalizedSessionNotes = 0
+        var fixedSessionEndDates = 0
+        var normalizedExerciseNames = 0
+        var normalizedExerciseNotes = 0
+        var reindexedExercises = 0
+        var normalizedSetNotes = 0
+        var sanitizedSetReps = 0
+        var sanitizedSetWeights = 0
+        var reindexedSets = 0
+
+        var totalFixes: Int {
+            normalizedSessionNotes
+            + fixedSessionEndDates
+            + normalizedExerciseNames
+            + normalizedExerciseNotes
+            + reindexedExercises
+            + normalizedSetNotes
+            + sanitizedSetReps
+            + sanitizedSetWeights
+            + reindexedSets
+        }
+
+        var hasFixes: Bool {
+            totalFixes > 0
+        }
+    }
+
+    @MainActor
+    static func repair(context: ModelContext) throws -> RepairReport {
+        let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        var report = RepairReport()
+
+        for session in sessions {
+            var didTouchSession = false
+
+            let trimmedSessionNotes = session.sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmedSessionNotes != session.sessionNotes {
+                session.sessionNotes = trimmedSessionNotes
+                report.normalizedSessionNotes += 1
+                didTouchSession = true
+            }
+
+            if let endedAt = session.endedAt, endedAt < session.startedAt {
+                session.endedAt = session.startedAt
+                report.fixedSessionEndDates += 1
+                didTouchSession = true
+            }
+
+            let orderedEntries = session.entries.sorted { lhs, rhs in
+                if lhs.orderIndex == rhs.orderIndex {
+                    return lhs.id.uuidString < rhs.id.uuidString
+                }
+                return lhs.orderIndex < rhs.orderIndex
+            }
+
+            for (index, entry) in orderedEntries.enumerated() {
+                if entry.orderIndex != index {
+                    entry.orderIndex = index
+                    report.reindexedExercises += 1
+                    didTouchSession = true
+                }
+
+                let normalizedExerciseName = sanitizeExerciseName(entry.exerciseName)
+                if normalizedExerciseName != entry.exerciseName {
+                    entry.exerciseName = normalizedExerciseName
+                    report.normalizedExerciseNames += 1
+                    didTouchSession = true
+                }
+
+                let normalizedEntryNotes = entry.entryNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+                if normalizedEntryNotes != entry.entryNotes {
+                    entry.entryNotes = normalizedEntryNotes
+                    report.normalizedExerciseNotes += 1
+                    didTouchSession = true
+                }
+
+                let orderedSets = entry.sets.sorted { lhs, rhs in
+                    if lhs.setIndex == rhs.setIndex {
+                        if lhs.loggedAt == rhs.loggedAt {
+                            return lhs.id.uuidString < rhs.id.uuidString
+                        }
+                        return lhs.loggedAt < rhs.loggedAt
+                    }
+                    return lhs.setIndex < rhs.setIndex
+                }
+
+                for (setOffset, set) in orderedSets.enumerated() {
+                    let expectedSetIndex = setOffset + 1
+                    if set.setIndex != expectedSetIndex {
+                        set.setIndex = expectedSetIndex
+                        report.reindexedSets += 1
+                        didTouchSession = true
+                    }
+
+                    let sanitizedReps = max(0, set.reps)
+                    if sanitizedReps != set.reps {
+                        set.reps = sanitizedReps
+                        report.sanitizedSetReps += 1
+                        didTouchSession = true
+                    }
+
+                    let sanitizedWeight = sanitizeSetWeight(set.weight)
+                    if sanitizedWeight != set.weight {
+                        set.weight = sanitizedWeight
+                        report.sanitizedSetWeights += 1
+                        didTouchSession = true
+                    }
+
+                    let normalizedSetNotes = set.setNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if normalizedSetNotes != set.setNotes {
+                        set.setNotes = normalizedSetNotes
+                        report.normalizedSetNotes += 1
+                        didTouchSession = true
+                    }
+                }
+            }
+
+            if didTouchSession {
+                report.sessionsTouched += 1
+            }
+        }
+
+        try WorkoutSessionManager.saveIfNeeded(context)
+        return report
+    }
+
+    static func sanitizeExerciseName(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Untitled Exercise" : trimmed
+    }
+
+    static func sanitizeSetWeight(_ value: Double) -> Double {
+        guard value.isFinite else {
+            return 0
+        }
+        return max(0, value)
     }
 }
 

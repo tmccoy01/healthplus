@@ -17,6 +17,13 @@ final class HealthPlusUITests: XCTestCase {
         app.launch()
     }
 
+    func testStatsShowsNoSessionsStateOnFreshLaunch() throws {
+        app.tabBars.buttons["Stats"].tap()
+
+        let noSessions = findElement("stats.placeholder.noSessions")
+        XCTAssertTrue(noSessions.waitForExistence(timeout: 8))
+    }
+
     func testCreateSessionAndVerifyHistoryEntry() throws {
         createAndSaveSimpleSession(exerciseName: "Bench Press", reps: "8", weight: "185")
 
@@ -63,6 +70,26 @@ final class HealthPlusUITests: XCTestCase {
         XCTAssertTrue(weightField.value as? String == "135")
     }
 
+    func testOpenStatsApplyDateFiltersAndKeepChartsVisible() throws {
+        createAndSaveSimpleSession(exerciseName: "Barbell Row", reps: "8", weight: "155")
+        app.tabBars.buttons["Stats"].tap()
+
+        let topSetChart = findElement("stats.chart.topSet")
+        let weeklyVolumeChart = findElement("stats.chart.weeklyVolume")
+        XCTAssertTrue(topSetChart.waitForExistence(timeout: 8))
+        XCTAssertTrue(weeklyVolumeChart.waitForExistence(timeout: 8))
+
+        let allRange = app.buttons["All"]
+        XCTAssertTrue(allRange.waitForExistence(timeout: 8))
+        allRange.tap()
+        XCTAssertTrue(topSetChart.waitForExistence(timeout: 8))
+
+        let fourWeeks = app.buttons["4W"]
+        XCTAssertTrue(fourWeeks.waitForExistence(timeout: 8))
+        fourWeeks.tap()
+        XCTAssertTrue(weeklyVolumeChart.waitForExistence(timeout: 8))
+    }
+
     private func createAndSaveSimpleSession(
         exerciseName: String,
         reps: String,
@@ -106,6 +133,12 @@ final class HealthPlusUITests: XCTestCase {
         saveSessionButton.tap()
 
         XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+    }
+
+    private func findElement(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(identifier: identifier)
+            .firstMatch
     }
 }
 

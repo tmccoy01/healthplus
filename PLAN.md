@@ -220,6 +220,25 @@ Create pure, testable stat functions:
   - Flat if within threshold band
   - Down if slope < negative threshold
 
+## 4.5 LiquidGlass + Modern iOS Standards (Always Required)
+
+This is a permanent rule for this plan: every feature and screen must use LiquidGlass styling and modern iOS implementation techniques.
+
+Required UI direction:
+- Use a LiquidGlass visual system for primary surfaces, overlays, cards, and navigation chrome.
+- Use modern material layering, blur, translucency, and depth so UI feels native to current iOS design language.
+- Preserve legibility and hierarchy over glass surfaces using adaptive contrast and semantic color roles.
+
+Required implementation techniques:
+- SwiftUI-first composition with `NavigationStack`, `sheet`/`presentationDetents`, and state-driven navigation.
+- Observation-era state patterns (`@Observable`, `@State`, `@Bindable`, `@Query`) where appropriate.
+- Smooth, meaningful motion and transitions tied to state changes (not decorative animations).
+- Native haptics, accessibility (Dynamic Type, VoiceOver labels, hit target sizing), and dark mode parity.
+- Current iOS APIs should be preferred over legacy UIKit-first patterns unless there is a clear technical blocker.
+
+Quality gate tied to this standard:
+- Any PR or session deliverable that does not follow LiquidGlass direction and modern iOS techniques is not considered complete.
+
 ## 5) Information Architecture and Screens
 
 Recommended tab structure (MVP):
@@ -446,6 +465,7 @@ MVP is done when:
 - Previous workout performance appears while logging.
 - Core stat logic is tested and stable.
 - New and changed behavior is covered by robust automated tests, with no critical untested paths.
+- UI implementation follows the LiquidGlass standard and modern iOS techniques defined in section 4.5.
 
 ## 11) How We Build This Together (Collaboration Contract)
 

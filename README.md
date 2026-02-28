@@ -104,7 +104,7 @@ Core entities:
 
 ## Current Status
 
-Phase 0, Phase 1, and Phase 2 are complete in source:
+Phase 0 through Phase 3 are complete in source:
 - SwiftUI app shell with 4 tabs (`Log`, `History`, `Stats`, `Settings`)
 - SwiftData model layer (`WorkoutType`, `ExerciseTemplate`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`, `BodyMetric`)
 - Idempotent default workout-type seed service
@@ -125,12 +125,20 @@ Phase 0, Phase 1, and Phase 2 are complete in source:
   - `WorkoutSessionManager`
   - `PreviousWeightLookupService`
   - `SessionVolumeCalculator`
+- Full Phase 3 stats flow:
+  - exercise + date-range filter controls
+  - top-set weight trend chart (line)
+  - weekly volume chart (bar)
+  - trend direction badge (`up`, `flat`, `down`, `insufficient data`)
+  - loading and empty states for chart data
+- Stats service added:
+  - `ExerciseStatsEngine`
 - UI tests added (`HealthPlusUITests`):
   - create session -> log set -> save -> verify history entry
   - edit set from history and verify persisted values
 - Test status:
   - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
-  - Result: passed (20 tests, 0 failures)
+  - Result: passed (22 tests, 0 failures)
 
 Detailed implementation plan lives in [PLAN.md](/Users/tannermccoy/Development/health+/PLAN.md).
 

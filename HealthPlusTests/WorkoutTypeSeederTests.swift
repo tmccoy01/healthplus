@@ -366,3 +366,204 @@ final class PreviousWeightLookupServiceTests: XCTestCase {
         return InMemoryStore(container: container, context: container.mainContext)
     }
 }
+
+@MainActor
+final class ExerciseStatsEngineTests: XCTestCase {
+    func testEstimatedOneRepMaxUsesEpleyFormula() {
+        let oneRepMax = ExerciseStatsEngine.estimatedOneRepMax(weight: 200, reps: 5)
+        XCTAssertEqual(oneRepMax, 233.3333, accuracy: 0.0001)
+    }
+
+    func testSnapshotBuildsPerformanceAndWeeklyVolumeAndUpTrend() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let exerciseName = "Bench Press"
+        let normalized = PreviousWeightLookupService.normalizeExerciseName(exerciseName)
+
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+        try addCompletedSession(
+            startedAt: t0,
+            exerciseName: exerciseName,
+            sets: [(8, 185), (6, 195)],
+            context: context
+        )
+        try addCompletedSession(
+            startedAt: t0.addingTimeInterval(7 * 24 * 60 * 60),
+            exerciseName: exerciseName,
+            sets: [(5, 205)],
+            context: context
+        )
+        try addCompletedSession(
+            startedAt: t0.addingTimeInterval(14 * 24 * 60 * 60),
+            exerciseName: exerciseName,
+            sets: [(3, 225)],
+            context: context
+        )
+
+        let snapshot = ExerciseStatsEngine.makeSnapshot(
+            sessions: try context.fetch(FetchDescriptor<WorkoutSession>()),
+            normalizedExerciseName: normalized,
+            interval: nil
+        )
+
+        XCTAssertEqual(snapshot.performancePoints.count, 3)
+        XCTAssertEqual(snapshot.weeklyVolumePoints.count, 3)
+        XCTAssertEqual(try XCTUnwrap(snapshot.bestWeight), 225, accuracy: 0.001)
+        XCTAssertEqual(snapshot.trend, .up)
+        XCTAssertEqual(snapshot.performancePoints.map(\.topSetWeight), [195, 205, 225])
+    }
+
+    func testSnapshotRespectsDateInterval() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let normalized = PreviousWeightLookupService.normalizeExerciseName("Squat")
+        let calendar = Calendar(identifier: .gregorian)
+
+        let referenceDate = Date(timeIntervalSince1970: 1_710_000_000)
+        let oldDate = calendar.date(byAdding: .month, value: -8, to: referenceDate) ?? referenceDate
+        let recentDate = calendar.date(byAdding: .day, value: -20, to: referenceDate) ?? referenceDate
+
+        try addCompletedSession(
+            startedAt: oldDate,
+            exerciseName: "Squat",
+            sets: [(5, 225)],
+            context: context
+        )
+        try addCompletedSession(
+            startedAt: recentDate,
+            exerciseName: "Squat",
+            sets: [(5, 255)],
+            context: context
+        )
+
+        let interval = DateInterval(
+            start: calendar.date(byAdding: .month, value: -3, to: referenceDate) ?? referenceDate,
+            end: referenceDate
+        )
+
+        let snapshot = ExerciseStatsEngine.makeSnapshot(
+            sessions: try context.fetch(FetchDescriptor<WorkoutSession>()),
+            normalizedExerciseName: normalized,
+            interval: interval,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(snapshot.performancePoints.count, 1)
+        XCTAssertEqual(try XCTUnwrap(snapshot.performancePoints.first?.topSetWeight), 255, accuracy: 0.001)
+    }
+
+    func testClassifyTrendHandlesInsufficientFlatAndDown() {
+        XCTAssertEqual(
+            ExerciseStatsEngine.classifyTrend(weights: [135, 145]),
+            .insufficientData
+        )
+        XCTAssertEqual(
+            ExerciseStatsEngine.classifyTrend(weights: [200, 200.3, 199.8, 200.2]),
+            .flat
+        )
+        XCTAssertEqual(
+            ExerciseStatsEngine.classifyTrend(weights: [245, 235, 225, 215]),
+            .down
+        )
+    }
+
+    func testTrendClassificationUpdatesWhenNewSessionIsAdded() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let normalized = PreviousWeightLookupService.normalizeExerciseName("Deadlift")
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+
+        try addCompletedSession(
+            startedAt: t0,
+            exerciseName: "Deadlift",
+            sets: [(5, 315)],
+            context: context
+        )
+        try addCompletedSession(
+            startedAt: t0.addingTimeInterval(7 * 24 * 60 * 60),
+            exerciseName: "Deadlift",
+            sets: [(5, 305)],
+            context: context
+        )
+        try addCompletedSession(
+            startedAt: t0.addingTimeInterval(14 * 24 * 60 * 60),
+            exerciseName: "Deadlift",
+            sets: [(5, 295)],
+            context: context
+        )
+
+        let baseline = ExerciseStatsEngine.makeSnapshot(
+            sessions: try context.fetch(FetchDescriptor<WorkoutSession>()),
+            normalizedExerciseName: normalized,
+            interval: nil
+        )
+        XCTAssertEqual(baseline.trend, .down)
+
+        try addCompletedSession(
+            startedAt: t0.addingTimeInterval(21 * 24 * 60 * 60),
+            exerciseName: "Deadlift",
+            sets: [(4, 355)],
+            context: context
+        )
+
+        let updated = ExerciseStatsEngine.makeSnapshot(
+            sessions: try context.fetch(FetchDescriptor<WorkoutSession>()),
+            normalizedExerciseName: normalized,
+            interval: nil
+        )
+        XCTAssertEqual(updated.trend, .up)
+    }
+
+    private func addCompletedSession(
+        startedAt: Date,
+        exerciseName: String,
+        sets: [(reps: Int, weight: Double)],
+        context: ModelContext
+    ) throws {
+        let session = try WorkoutSessionManager.startSession(
+            workoutType: nil,
+            context: context,
+            startedAt: startedAt
+        )
+        let entry = try WorkoutSessionManager.addExercise(
+            to: session,
+            name: exerciseName,
+            context: context
+        )
+
+        for (index, set) in sets.enumerated() {
+            _ = try WorkoutSessionManager.addSet(
+                to: entry,
+                reps: set.reps,
+                weight: set.weight,
+                context: context,
+                loggedAt: startedAt.addingTimeInterval(Double(index) * 60)
+            )
+        }
+
+        try WorkoutSessionManager.finishSession(
+            session,
+            context: context,
+            endedAt: startedAt.addingTimeInterval(60 * 60)
+        )
+    }
+
+    private struct InMemoryStore {
+        let container: ModelContainer
+        let context: ModelContext
+    }
+
+    private func makeInMemoryStore() throws -> InMemoryStore {
+        let schema = Schema([
+            WorkoutType.self,
+            ExerciseTemplate.self,
+            WorkoutSession.self,
+            ExerciseEntry.self,
+            SetEntry.self,
+            BodyMetric.self
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        return InMemoryStore(container: container, context: container.mainContext)
+    }
+}

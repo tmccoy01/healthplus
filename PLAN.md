@@ -1,519 +1,510 @@
-# Workout Tracking App Plan (SwiftUI-First)
+# health+ Product + Build Plan
 
-Date: February 27, 2026  
-Project: `health+`  
-Platform target: iOS first (SwiftUI + SwiftData), expand later to iPad/macOS if desired
+Last updated: February 28, 2026
+Platform: iOS (SwiftUI-first)
 
-## 1) Product Goal
+## 0) Mission
 
-Build a workout tracking app that is fast to log during training, structured enough to show progress, and simple enough to iterate with you session-by-session.
+Build a workout tracker that feels premium, fast, and focused in-gym.
 
-Core MVP outcomes:
-- Organize workouts by type/muscle focus and allow custom additions.
-- Log workouts with reps, sets, weight, and notes.
-- Show meaningful statistics over time (graph, previous weight reference, progress indicators).
-- Keep architecture clean so we can add advanced features without rework.
+This plan updates the product direction to match the interaction density and visual tone of your reference screens:
+- dark, high-contrast, low-noise surfaces
+- glassy controls and navigation chrome
+- dense but readable set logging cards
+- timeline-style workout history
 
-## 2) MVP Scope (Mapped to Your Requirements)
+We are intentionally taking inspiration from structure and feel, not copying the app 1:1.
 
-### 2.1 Workout Types (and add new)
+## 0.1) Execution Order and Numbering (Canonical)
 
-Must-have:
-- Pre-seeded starter types: `Back`, `Triceps`, `Biceps`, plus more common groups.
-- Create custom workout types from UI.
-- Edit and soft-delete types (prevent accidental data loss when historical logs exist).
-- Optional color/icon per type for visual organization.
+Important clarification:
+- Section numbers in this document (`0` to `15`) are chapter labels, not execution phases.
+- Execution phases use this single numbered sequence (`Phase 0` to `Phase 9`).
 
-Data we store per type:
-- `id`
-- `name`
-- `isSystemType` (seeded vs user-created)
-- `isArchived`
-- `createdAt`
-- `sortOrder`
-- `colorHex` (optional)
-- `symbolName` (optional SF Symbol)
+Canonical roadmap:
+- See `11) Canonical Phase Roadmap (0-9)` for the single detailed execution plan.
+- Current active phase is `Phase 4`.
+- Previous letter phases (`A` to `E`) are retired and remapped to `Phase 5` to `Phase 9`.
 
-### 2.2 Track Individual Workouts
+## 1) Reference Alignment (What We Are Matching)
 
-Must-have logging fields:
-- Exercise name
-- Sets
-- Reps
-- Weight
-- Notes
-- Timestamp
-- Workout type association
+## 1.1 Visual and UX cues to emulate
 
-Recommended structure:
-- A workout session contains multiple exercise entries.
-- Each exercise entry contains multiple set entries.
-- Notes exist at both session and exercise-entry level.
+From your provided screens, we should match these qualities:
+- Dark-first interface with very subtle surface separation.
+- Glassy, rounded controls in nav and tab regions.
+- Strong card grouping for each exercise and session.
+- Compact, repeated row structure for sets (`set #`, `weight`, `reps`, `notes`).
+- Timeline-style log list with date pill, workout title, and exercise summary lines.
+- Focused accent color usage (teal/cyan) for actions and active tab state.
 
-Why this shape:
-- It matches how people actually train.
-- It enables cleaner statistics (per set, per exercise, per session, per type).
+## 1.2 What we will not copy
 
-### 2.3 Statistics
+- Exact iconography layout and exact spacing from the reference app.
+- Identical card proportions and text hierarchy line-for-line.
+- Exact information architecture names/tabs if they do not fit our roadmap.
 
-Must-have metrics:
-- Graph over time (weight, estimated strength, volume).
-- Previous weight shown during logging (last set or last session reference).
-- Progress indicators (up/down/flat trends).
+## 1.3 Our distinct signature
 
-MVP stat cards:
-- Last workout date
-- Best recorded weight
-- 4-week trend
-- Total weekly volume
+`Set Strip Timeline`: each exercise card includes a compact mini-strip showing all sets and intensity progression (e.g., load ramp or drop-off), so users see session shape immediately.
 
-### 2.4 Extra Recommendations (from me)
+## 2) Internet-Informed Apple Guidance (Design + Architecture)
 
-High-value additions right after MVP:
-- Rest timer between sets.
-- Quick duplicate of previous workout.
-- PR markers (best set by weight/reps/estimated 1RM).
-- Search + filter history by type/exercise/date.
-- CSV export for backup/analysis.
+This plan uses Apple platform guidance and modern SwiftUI patterns as the baseline:
+- Liquid Glass overview: https://developer.apple.com/documentation/technologyoverviews/liquid-glass
+- Apple Human Interface Guidelines: https://developer.apple.com/design/human-interface-guidelines
+- SwiftUI Material: https://developer.apple.com/documentation/swiftui/material
+- SwiftUI NavigationStack: https://developer.apple.com/documentation/swiftui/navigationstack
+- SwiftUI TabView: https://developer.apple.com/documentation/swiftui/tabview
+- SwiftUI sensory feedback: https://developer.apple.com/documentation/swiftui/view/sensoryfeedback(_:trigger:)
+- What’s new in SwiftUI: https://developer.apple.com/swiftui/whats-new/
 
-## 3) Interface-Design Skill Outputs (Required Exploration)
+## 3) Non-Negotiable Product Standards
 
-This is the product-design direction before implementation.
+These standards apply to every phase and every PR.
 
-### 3.1 Domain Concepts (fitness log world)
+- LiquidGlass + modern iOS techniques are required for all UI surfaces and interactions.
+- Everything must be VERY well tested before a phase can be marked complete.
+- Accessibility is required, not optional: Dynamic Type, VoiceOver labels, contrast, and touch-target sizing.
+- If a decision improves speed and clarity for in-gym logging, prioritize it over decorative complexity.
 
-- Progressive overload
-- Training split (muscle focus by day)
-- Volume and intensity balance
-- Form quality and fatigue notes
-- Recovery windows between sessions
-- Consistency streaks
-- Performance plateaus and breakthroughs
+## 4) Experience Principles
 
-### 3.2 Color World (grounded in gym/training context)
+- Log fast: users can add a full set in 2-3 taps.
+- Read fast: hierarchy should make current set and next action obvious at a glance.
+- Review fast: history and stats should answer “am I progressing?” within seconds.
+- Stay calm: visuals should feel serious and intentional, not flashy.
 
-- Rubber floor charcoal
-- Steel plate gray
-- Chalk white
-- Safety orange accents (plates/markers)
-- Deep navy/graphite for calm data surfaces
-- Signal colors for performance states (green up, amber flat, red down)
+## 5) Visual System (LiquidGlass + Dark Athletic)
 
-### 3.3 Signature Element
+## 5.1 Color system
 
-`Set Strip Timeline`: each exercise row shows a compact horizontal strip of logged sets (weight x reps), giving immediate "what happened in this exercise" context without opening detail screens.
+Use semantic tokens; avoid hardcoding random hex values in views.
 
-Why it is unique/useful:
-- It mirrors the set-by-set mental model of lifters.
-- It surfaces performance shape (ramped sets, back-off sets, drop-offs) quickly.
+- `bg.canvas`: near-black base background.
+- `bg.surface`: primary card surface (very dark neutral).
+- `bg.surfaceElevated`: higher surface for overlays/popovers.
+- `glass.chrome`: translucent system material for nav/tab/pills.
+- `text.primary`: high-contrast white.
+- `text.secondary`: muted light gray.
+- `text.tertiary`: dim metadata.
+- `border.hairline`: low-alpha separators.
+- `accent.primary`: cyan/teal action color.
+- `state.success`, `state.warning`, `state.error`: trend and status colors.
 
-### 3.4 Defaults to Avoid (and replacement)
+## 5.2 Typography
 
-Default to avoid: generic card grid dashboard with disconnected metrics.  
-Replacement: timeline-first training log where metrics are anchored to recent sessions.
+- SF Pro for body/navigation text.
+- Monospaced digits for set/weight/reps values.
+- Large, bold exercise/session titles.
+- Compact secondary lines for exercise summaries in log list.
 
-Default to avoid: single flat "workout form" page with long scrolling fields.  
-Replacement: stepwise logging flow with quick set entry and "add another set" speed actions.
+## 5.3 Spacing and geometry
 
-Default to avoid: random bright palette and decorative gradients.  
-Replacement: restrained, athletic palette with semantic color only for state meaning.
+- 8pt base grid.
+- Card radius: 24pt for major containers, 16pt for sub-containers.
+- Row minimum height: 56pt for tappable set rows.
+- Consistent inner card padding: 16-20pt.
 
-## 4) Technical Architecture (SwiftUI + needed Apple frameworks)
+## 5.4 Depth strategy
 
-## 4.1 Stack
+- Use material + subtle border layering over heavy shadows.
+- Hairline separators inside cards for row boundaries.
+- Maintain low contrast jumps; hierarchy should be clear without harsh lines.
 
-- UI: SwiftUI
-- Local persistence: SwiftData
-- Charts: Swift Charts
-- Concurrency: Swift Concurrency (`async/await`) where needed
-- Testing: XCTest (unit + UI tests)
-- Optional later: CloudKit sync via SwiftData (phase 2+)
+## 5.5 Motion and haptics
 
-## 4.2 App Architecture Pattern
+- Quick, subtle transitions for add/delete/reorder set actions.
+- `sensoryFeedback` on key interactions:
+  - add set
+  - complete session
+  - PR achieved
+- No bouncy animations that slow logging.
 
-Use a pragmatic feature-first MV pattern:
-- `Features/WorkoutTypes`
-- `Features/Logging`
-- `Features/History`
+## 6) Screen Blueprints
+
+## 6.1 Log Feed Screen (reference-inspired timeline)
+
+Primary structure:
+- Top glass nav region: `Edit` (left), title (`Log`), add (`+`) on right.
+- Scrollable timeline list of workout sessions.
+- Each session row includes:
+  - Date pill (weekday + day number).
+  - Session title.
+  - Optional duration aligned right.
+  - Multi-line exercise summary (`4x Cable Row`, etc.).
+- Bottom glass tab bar with clear active accent state.
+
+Behavior:
+- Tap row -> session detail.
+- Swipe row for quick actions (duplicate, archive, delete with confirm).
+- Pull-to-refresh if cloud sync is enabled later.
+
+## 6.2 Session Detail Screen (set-entry card model)
+
+Primary structure:
+- Header area with date, session quick actions, optional bodyweight row.
+- Exercise cards stacked vertically.
+- Card header: exercise name + overflow menu.
+- Set rows inside card:
+  - left: circular set index badge
+  - center: columns for `Weight`, `Reps`, `Notes`
+  - right: quick row menu
+- Card footer action row: `+ Add Set` + quick stats/bookmark actions.
+
+Interaction priorities:
+- Add set from bottom of each card without leaving screen.
+- Repeat last set pre-fills new row values.
+- Inline edit values with numeric keyboard and done toolbar.
+- Undo for destructive row actions.
+
+## 6.3 Stats Screen (modern, not generic dashboard)
+
+Primary modules:
+- Exercise selector (searchable).
+- Time-range control (4w / 8w / 12w / 6m / 1y).
+- Main chart area (top set weight and/or estimated 1RM trend).
+- Secondary metrics row:
+  - current best
+  - previous best
+  - trend direction
+  - weekly volume
+- Session-level trend notes and milestone markers.
+
+## 6.4 Routines Screen
+
+Primary modules:
+- Routine templates list with split tags (Push/Pull/Legs etc.).
+- Template preview includes expected exercise order and set targets.
+- One-tap “Start from routine” to spawn editable live session.
+
+## 6.5 Profile / Settings Screen
+
+Primary modules:
+- Workout type management.
+- Units (lb/kg).
+- Rest timer defaults.
+- Data controls (export/import later phase).
+- Appearance controls (respect system default, tune accent intensity).
+
+## 7) Information Architecture
+
+Primary tabs:
+- `Log`
+- `Routines`
+- `Stats`
+- `Profile`
+
+Secondary flows:
+- Session Detail
+- Exercise Insights
+- Workout Type Management
+
+Navigation:
+- `NavigationStack` for each primary tab flow.
+- Deep-link ready path model for future integrations.
+
+## 8) Data + Domain Model
+
+Current core entities remain:
+- `WorkoutType`
+- `WorkoutSession`
+- `ExerciseEntry`
+- `SetEntry`
+- `ExerciseTemplate`
+- `BodyMetric`
+
+Add/confirm these fields for reference-aligned UX:
+- `WorkoutSession.durationSeconds`
+- `WorkoutSession.sessionTitle` (optional explicit title)
+- `WorkoutSession.bodyWeight` (optional snapshot)
+- `ExerciseEntry.isFavorite`
+- `SetEntry.completedAt`
+- `SetEntry.rpe` (optional, phase 4+)
+
+Service layer updates:
+- `PreviousWeightLookupService`
+- `SessionVolumeCalculator`
+- `TrendEngine`
+- `RoutineInstantiationService`
+
+## 9) SwiftUI Architecture Decisions
+
+Feature-first folders:
+- `Features/LogFeed`
+- `Features/SessionDetail`
+- `Features/Routines`
 - `Features/Stats`
-- `Shared/Components`
-- `Shared/Theme`
-- `Core/Models`
-- `Core/Services`
-- `Core/Stats`
+- `Features/Profile`
 
-State approach:
-- `@Query` for SwiftData-backed lists.
-- `@State` and `@Bindable` for local editing.
-- Small `@Observable` view models only where business logic is non-trivial.
+Shared UI kit:
+- `Shared/Theme` (tokens + semantic colors + typography)
+- `Shared/Components/Glass`:
+  - `GlassCard`
+  - `GlassPillButton`
+  - `GlassTabChrome`
+- `Shared/Components/Log`:
+  - `TimelineDatePill`
+  - `SessionSummaryRow`
+- `Shared/Components/Session`:
+  - `ExerciseCard`
+  - `SetRow`
+  - `AddSetActionRow`
 
-Why this works:
-- Minimal boilerplate.
-- Easy for us to evolve while pairing.
-- Clean enough for testability and refactors.
+State patterns:
+- SwiftData via `@Query` for read-heavy lists.
+- `@Observable` view models where orchestration is non-trivial.
+- `@State`/`@Bindable` for local editing surfaces.
 
-## 4.3 Data Model (SwiftData)
+Modern iOS techniques required:
+- `NavigationStack`
+- Material backgrounds for chrome
+- `safeAreaInset` for persistent bottom actions
+- `contentTransition(.numericText())` for changing metrics where useful
+- accessibility custom actions and labels
 
-Main entities:
+## 10) Testing Strategy (Phase Gates)
 
-`WorkoutType`
-- `id: UUID`
-- `name: String`
-- `isSystemType: Bool`
-- `isArchived: Bool`
-- `colorHex: String?`
-- `symbolName: String?`
-- `createdAt: Date`
-- `sortOrder: Int`
+A phase cannot be completed unless all required test artifacts exist and are passing.
 
-`ExerciseTemplate`
-- `id: UUID`
-- `name: String`
-- `defaultWorkoutType: WorkoutType?`
-- `createdAt: Date`
-- `isArchived: Bool`
+## 10.1 Required test layers
 
-`WorkoutSession`
-- `id: UUID`
-- `startedAt: Date`
-- `endedAt: Date?`
-- `workoutType: WorkoutType`
-- `sessionNotes: String`
-- `entries: [ExerciseEntry]`
+- Unit tests:
+  - calculations (volume, trend, previous weight, estimated 1RM)
+  - domain validation (duplicate names, empty values, range checks)
+- UI tests:
+  - core user journeys per screen
+  - add/edit/delete flows
+  - navigation and persistence checks
+- Snapshot/visual regression tests (if adopted in toolchain):
+  - key cards and list rows in dark mode
+  - Dynamic Type large sizes
+- Accessibility tests:
+  - VoiceOver labels/hints on interactive controls
+  - minimum target sizes
 
-`ExerciseEntry`
-- `id: UUID`
-- `session: WorkoutSession`
-- `exerciseName: String`
-- `orderIndex: Int`
-- `entryNotes: String`
-- `sets: [SetEntry]`
+## 10.2 Required artifacts per phase
 
-`SetEntry`
-- `id: UUID`
-- `exerciseEntry: ExerciseEntry`
-- `setIndex: Int`
-- `reps: Int`
-- `weight: Double`
-- `isWarmup: Bool`
-- `setNotes: String`
-- `loggedAt: Date`
+- Scope summary (goals, deliverables, acceptance criteria)
+- Implementation inventory (files/modules changed)
+- Test plan (new and updated scenarios)
+- Test code (committed in same phase)
+- Verification commands + outcomes
+- Coverage and residual risk statement
+- Manual QA checklist output
+- Documentation updates (`PLAN.md`, `README.md`, `MEMORY.md` when impacted)
+- Explicit phase PASS/FAIL verdict
 
-`BodyMetric` (optional for phase 1, useful for later)
-- `id: UUID`
-- `date: Date`
-- `bodyWeight: Double?`
-- `bodyFatPercent: Double?`
-- `notes: String`
+## 11) Canonical Phase Roadmap (0-9)
 
-## 4.4 Core Calculation Engine
+Single source of truth:
+- Phases are executed in strict numeric order.
+- Current active phase: `4`.
+- Active implementation path: `4 -> 5 -> 6 -> 7 -> 8 -> 9`.
 
-Create pure, testable stat functions:
-- `totalVolume = sum(weight * reps)` by scope (exercise/session/week)
-- `previousWeight` resolver:
-  - Priority 1: last set for same exercise
-  - Priority 2: last session max for exercise
-  - Fallback: nil
-- `estimatedOneRepMax` (Epley): `weight * (1 + reps / 30)`
-- Trend classifier over rolling windows:
-  - Up if slope > threshold
-  - Flat if within threshold band
-  - Down if slope < negative threshold
-
-## 4.5 LiquidGlass + Modern iOS Standards (Always Required)
-
-This is a permanent rule for this plan: every feature and screen must use LiquidGlass styling and modern iOS implementation techniques.
-
-Required UI direction:
-- Use a LiquidGlass visual system for primary surfaces, overlays, cards, and navigation chrome.
-- Use modern material layering, blur, translucency, and depth so UI feels native to current iOS design language.
-- Preserve legibility and hierarchy over glass surfaces using adaptive contrast and semantic color roles.
-
-Required implementation techniques:
-- SwiftUI-first composition with `NavigationStack`, `sheet`/`presentationDetents`, and state-driven navigation.
-- Observation-era state patterns (`@Observable`, `@State`, `@Bindable`, `@Query`) where appropriate.
-- Smooth, meaningful motion and transitions tied to state changes (not decorative animations).
-- Native haptics, accessibility (Dynamic Type, VoiceOver labels, hit target sizing), and dark mode parity.
-- Current iOS APIs should be preferred over legacy UIKit-first patterns unless there is a clear technical blocker.
-
-Quality gate tied to this standard:
-- Any PR or session deliverable that does not follow LiquidGlass direction and modern iOS techniques is not considered complete.
-
-## 5) Information Architecture and Screens
-
-Recommended tab structure (MVP):
-- `Log` (start workout / quick add sets)
-- `History` (past sessions, filters)
-- `Stats` (graphs + trends)
-- `Settings` (manage workout types, units, defaults)
-
-## 5.1 Log Tab
-
-Primary jobs:
-- Start session by selecting workout type.
-- Add exercise entries quickly.
-- Add/edit set rows with reps/weight/notes.
-- Show previous performance inline during set entry.
-
-UX details:
-- Numeric keyboard for reps/weight.
-- "Repeat last set" shortcut.
-- Swipe-to-delete set with undo.
-- Auto-increment set number.
-
-## 5.2 History Tab
-
-Primary jobs:
-- Browse sessions by date.
-- Filter by workout type/exercise.
-- Open detailed session recap.
-
-UX details:
-- Group by week.
-- Quick chips for filters.
-- Session card shows total volume and exercise count.
-
-## 5.3 Stats Tab
-
-Primary jobs:
-- Plot selected exercise performance over time.
-- View progress trends and best lifts.
-- Compare recent block vs previous block.
-
-Charts in MVP:
-- Line chart: top set weight over time.
-- Bar chart: weekly volume.
-- Optional area/line toggle for estimated 1RM.
-
-## 5.4 Settings Tab
-
-Primary jobs:
-- Manage workout types.
-- Unit preferences (lb/kg).
-- Default rest timer.
-- Data export/import hooks (if added in phase 2).
-
-## 6) Build-Together Delivery Plan
-
-This is sequenced for collaboration so you can review and adjust each layer.
-
-## Phase 0: Foundation (Session 1)
-
-Status: Complete (verified 2026-02-28)
+## Phase 0 (Complete): Foundation and App Shell
 
 Goals:
-- Create SwiftUI app shell.
-- Add SwiftData container.
-- Implement theme tokens (colors, spacing, typography scale).
-- Seed default workout types on first launch.
+- Create SwiftUI app shell and SwiftData baseline.
 
-Deliverables:
-- Running app with tab structure.
-- Workout type list rendering seeded data.
-- Basic data model committed.
+Outcome:
+- Complete and verified.
 
-Acceptance criteria:
-- App boots cleanly with no runtime model errors.
-- Seed logic is idempotent (no duplicate default types).
-- Checkoff evidence:
-  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
-  - Seeder idempotency + normalization tests passing in `WorkoutTypeSeederTests`.
-
-## Phase 1: Workout Type Management (Session 1-2)
-
-Status: Complete (verified 2026-02-28)
+## Phase 1 (Complete): Workout Type Management
 
 Goals:
-- CRUD for workout types.
-- Archive instead of destructive delete when referenced by sessions.
+- Implement workout type CRUD with validation and archive-safe behavior.
 
-Deliverables:
-- Settings screen for types.
-- Validation (no empty names, no duplicates ignoring case/whitespace).
+Outcome:
+- Complete and verified.
 
-Acceptance criteria:
-- User can add/edit/archive types.
-- Existing sessions remain intact after type archiving.
-- Checkoff evidence:
-  - Settings screen supports add/edit/archive for workout types.
-  - Validation blocks empty and duplicate names (case/whitespace-insensitive).
-  - Archive behavior preserves existing session relationship (tested).
-  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes.
-
-## Phase 2: Logging Flow (Session 2-4)
-
-Status: Complete (verified 2026-02-28)
+## Phase 2 (Complete): Core Logging and History
 
 Goals:
-- Start and save sessions.
-- Add exercise entries and set rows.
-- Capture reps/weight/notes.
-- Show previous weight reference while logging.
+- Deliver session logging, set editing, and history navigation.
 
-Deliverables:
-- Full logging screen.
-- Session detail and edit.
+Outcome:
+- Complete and verified.
 
-Acceptance criteria:
-- Complete session can be created in <30 seconds for a typical workout.
-- Previous weight appears for matching exercise names.
-- Data persists after app relaunch.
-- Checkoff evidence:
-  - `Log` tab now supports full end-to-end logging:
-    - start/save sessions
-    - add/remove exercises
-    - add/remove/edit sets with auto-increment set numbering
-    - session/exercise/set notes
-    - repeat-last-set shortcut
-    - swipe-to-delete sets with undo
-  - Previous-weight hint is shown inline while editing each exercise in session logging.
-  - `History` tab now provides grouped-by-week session timeline, quick type/exercise filter chips, and editable session detail.
-  - New services implemented and covered by unit tests:
-    - `WorkoutSessionManager`
-    - `PreviousWeightLookupService`
-    - `SessionVolumeCalculator`
-  - UI tests added in `HealthPlusUITests` for phase-2 logging flow:
-    - create session -> log set -> save -> verify history entry
-    - edit logged set from history -> verify persisted values
-  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes (20 tests, 0 failures).
-
-## Phase 3: Stats and Progress (Session 4-5)
+## Phase 3 (Complete): Baseline Stats
 
 Goals:
-- Add stats engine and charts.
-- Add progress indicators (up/down/flat).
+- Deliver initial stats engine, charts, and progress indicators.
 
-Deliverables:
-- Stats dashboard for selected exercise and date range.
-- Graphs with empty/loading states.
+Outcome:
+- Complete and verified.
 
-Acceptance criteria:
-- Charts render correctly for at least 3 months of sample data.
-- Progress status updates as new sessions are added.
-
-## Phase 4: Polish + Reliability (Session 5-6)
+## Phase 4 (Current): Baseline Reliability Pass
 
 Goals:
-- Improve UI speed and ergonomics.
-- Add test coverage for calculations and key UI flows.
-- Improve error handling and edge-case messaging.
+- Harden current production flows before major visual redesign.
+- Eliminate known reliability risks in logging/history/stats workflows.
+- Establish a clean, repeatable verification baseline before Phase 5 UI refresh.
 
 Deliverables:
-- Unit tests for stat functions.
-- UI tests for core flows.
-- Better empty states and validation copy.
+- Reliability bug-fix sweep for existing Phase 0-3 features.
+- Error/empty/loading state consistency pass across `Log`, `History`, and `Stats`.
+- Data integrity and migration safety checks for existing SwiftData models.
+- Baseline performance measurements for common flows.
+
+Required tests:
+- Unit tests for high-risk services and edge-case calculations.
+- UI tests covering critical end-to-end flows:
+  - create session -> add sets -> save -> verify history
+  - open stats -> apply filters -> verify chart/state transitions
+- Regression tests for previously fixed bugs.
+- Accessibility validation for key existing screens.
 
 Acceptance criteria:
-- No critical crash in happy-path QA.
-- Core tests pass in CI/local run.
+- No known P0/P1 reliability bugs remain in current flows.
+- Full automated suite passes on current baseline.
+- Phase artifact checklist is complete with explicit PASS verdict.
 
-## 7) Backlog (Detailed)
+## Phase 5 (Queued): Visual Foundation Refresh
 
-MVP must-do tickets:
-- [x] Define SwiftData models + relationships
-- [x] App launch seeding service for default workout types
-- [x] Workout type CRUD UI
-- [x] Start/stop workout session
-- [x] Add/remove exercise entry inside session
-- [x] Add/remove/edit set entries
-- [x] Notes at exercise and session levels
-- [x] History list and session detail
-- [x] Previous-weight lookup service
-- [ ] Stats calculation engine
-- [ ] Line + bar charts in Stats tab
-- [ ] Trend badge logic (up/flat/down)
-- [x] Input validation + form UX polish
-- [ ] Unit tests for stats + lookup logic
-- [x] UI tests for session logging flow
+Goals:
+- Establish full LiquidGlass token system and shared components.
+- Update app shell (nav/tab chrome) to match target visual language.
 
-Post-MVP strong candidates:
-- [ ] Rest timer and notifications
-- [ ] Personal records tracker
-- [ ] Favorite/recent exercise quick-add
-- [ ] CSV export
-- [ ] Cloud sync
-- [ ] Apple Watch quick log
+Deliverables:
+- `AppTheme` token expansion.
+- Glass component primitives.
+- Updated tab/nav appearance.
 
-## 8) Quality Strategy
+Required tests:
+- Unit tests for theme/token mapping utilities.
+- UI tests asserting core shell renders and tab switching works.
+- Accessibility checks for all shell controls.
 
-Testing is non-negotiable for this project: everything must be **VERY** well tested.
+Acceptance criteria:
+- Shell feels visually aligned with reference tone.
+- No contrast/accessibility regressions.
 
-## 8.1 Unit Tests
+## Phase 6 (Queued): Log Feed Redesign
 
-Focus on deterministic logic:
-- Volume calculations
-- Trend calculations
-- Previous-weight lookup
-- 1RM estimator
-- Type-name normalization and duplicate checks
+Goals:
+- Implement date-pill timeline rows and dense session summaries.
 
-## 8.2 UI Tests
+Deliverables:
+- New `Log` list row component set.
+- Edit and plus actions in glass chrome.
+- Session row quick actions.
 
-Key flows:
-- Create type -> start session -> log sets -> save -> verify history entry
-- Edit set and verify stats update
-- Archive type and verify old sessions still display correctly
+Required tests:
+- UI tests for row tap navigation, swipe actions, and edit mode toggles.
+- Unit tests for summary line generation and date grouping logic.
 
-## 8.3 Manual QA Checklist
+Acceptance criteria:
+- Users can scan a week of sessions in under 10 seconds.
+- Timeline hierarchy is clear at a glance.
 
-- Rapid logging with one hand
-- Large text accessibility
-- Empty states on clean install
-- Editing/deleting with undo safety
-- Date and unit formatting correctness
+## Phase 7 (Queued): Session Detail Redesign
 
-## 9) Risks and Mitigations
+Goals:
+- Implement exercise card + set-row workflow like reference structure.
+- Optimize in-workout logging speed.
 
-Risk: Data model churn early can cause migration pain.  
-Mitigation: Lock core model by end of phase 1, and avoid renaming entities after logs exist.
+Deliverables:
+- Exercise card stack.
+- Inline set editing.
+- Add-set action row and repeat-last-set.
 
-Risk: Logging flow becomes too form-heavy and slow in-gym use.  
-Mitigation: prioritize speed shortcuts (repeat last set, numeric focus, minimal taps).
+Required tests:
+- UI tests for add/edit/delete/reorder sets.
+- Unit tests for prefill/previous-weight logic.
+- Regression tests for persistence and undo flows.
 
-Risk: Trend stats can be misleading with sparse data.  
-Mitigation: show confidence/insufficient-data states for low sample counts.
+Acceptance criteria:
+- Adding a new set should take <= 3 taps.
+- Row edits persist correctly through app relaunch.
 
-Risk: Duplicate exercise naming causes fragmented stats (`Bench`, `Bench Press`, `BB Bench`).  
-Mitigation: add optional template pickers and alias normalization in phase 2.
+## Phase 8 (Queued): Stats + Routines Modernization
 
-## 10) Definition of Done for MVP
+Goals:
+- Build actionable progress views and routine flows.
 
-MVP is done when:
-- User can manage workout types (including custom).
-- User can complete and persist full workout logs (reps/sets/weight/notes).
-- User can review history and visualize progress over time.
-- Previous workout performance appears while logging.
-- Core stat logic is tested and stable.
-- New and changed behavior is covered by robust automated tests, with no critical untested paths.
-- UI implementation follows the LiquidGlass standard and modern iOS techniques defined in section 4.5.
+Deliverables:
+- Stats trends with exercise/time filters.
+- Routine templates and “start from routine.”
 
-## 11) How We Build This Together (Collaboration Contract)
+Required tests:
+- Unit tests for trend math and PR detection.
+- UI tests for filter state, chart data updates, and routine instantiation.
 
-For each session:
-1. Align on one phase goal.
-2. Implement a vertical slice (UI + model + test).
-3. Run quick QA checklist.
-4. Commit small, reviewable changes.
-5. Decide next slice.
+Acceptance criteria:
+- Stats answer progress question quickly and accurately.
+- Routine-to-live-session flow is stable.
 
-Coding style:
-- Keep components small.
-- Prefer explicit naming over clever abstractions.
-- Add tests for new math logic immediately.
-- Avoid premature generic frameworks until repeated patterns appear.
+## Phase 9 (Queued): Polish, Accessibility, and Performance
 
-## 12) Immediate Next Session Plan (Concrete)
+Goals:
+- Remove friction, increase reliability, and harden edge cases.
 
-If we start coding right now, first sequence should be:
-1. Scaffold SwiftUI app shell with 4 tabs.
-2. Add SwiftData models (`WorkoutType`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`).
-3. Seed default workout types on first launch.
-4. Build Workout Type management screen.
-5. Add first pass of logging screen with set rows (reps/weight/notes).
+Deliverables:
+- animation/haptics pass
+- accessibility pass
+- performance tuning pass
 
-Expected output after this first build slice:
-- You can create a workout type and log at least one exercise with multiple sets end-to-end.
+Required tests:
+- UI tests at larger Dynamic Type sizes.
+- Stress tests with large session history data.
+- Full regression suite green.
+
+Acceptance criteria:
+- Smooth performance on realistic datasets.
+- Accessibility and usability checks pass without critical issues.
+
+## 12) Manual QA Checklists
+
+## 12.1 Log Feed
+
+- Date pills remain aligned across varying title lengths.
+- Duration labels align and truncate gracefully.
+- Swipe actions do not conflict with vertical scrolling.
+
+## 12.2 Session Detail
+
+- Keyboard does not obscure active editable fields.
+- Add set and repeat-last-set work in rapid succession.
+- Row deletion offers undo and restores correctly.
+
+## 12.3 Stats
+
+- Empty states are clear and actionable.
+- Trend colors and labels are consistent with data.
+- Chart interactions remain smooth at larger datasets.
+
+## 13) Risks + Mitigations
+
+Risk: UI becomes too dense and hard to edit quickly.  
+Mitigation: run one-hand logging usability checks every phase.
+
+Risk: Overuse of glass/material hurts readability.  
+Mitigation: strict contrast testing and fallback solid surfaces when needed.
+
+Risk: design drift from reference intent over time.  
+Mitigation: add visual acceptance snapshots for key screens.
+
+Risk: test gaps during fast iteration.  
+Mitigation: enforce artifact checklist and no phase completion without tests.
+
+## 14) Definition of Done
+
+The product milestone is done only when:
+- Core flows match target UX quality (timeline log + fast set-entry cards).
+- LiquidGlass and modern iOS implementation standards are met.
+- All required tests are present and green.
+- Accessibility and manual QA checklists pass.
+- Docs and memory are updated for session continuity.
+
+## 15) Immediate Next Session Plan
+
+1. Execute `Phase 4` reliability pass and create a baseline defect/test matrix.
+2. Add/fix tests for current high-risk flows and close reliability gaps.
+3. Run full verification suite and complete phase artifact checklist for `Phase 4`.
+4. Start `Phase 5` by locking `Shared/Theme` tokens and `Shared/Components/Glass` primitives.
+5. Document PASS/FAIL for `Phase 4` and then proceed to `Phase 5`.
 
 ---
 
-This plan is intentionally detailed so we can execute it incrementally without re-architecting each step.
+This plan is intentionally opinionated so implementation decisions stay consistent with your target aesthetic and with modern iOS engineering standards.

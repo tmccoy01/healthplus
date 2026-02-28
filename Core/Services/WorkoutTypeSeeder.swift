@@ -399,3 +399,191 @@ struct SessionVolumeCalculator {
         session.entries.reduce(0) { $0 + $1.sets.count }
     }
 }
+
+struct ExerciseStatsEngine {
+    enum TrendDirection: Equatable {
+        case up
+        case flat
+        case down
+        case insufficientData
+    }
+
+    struct PerformancePoint: Identifiable, Equatable {
+        let sessionID: UUID
+        let date: Date
+        let topSetWeight: Double
+        let estimatedOneRepMax: Double
+        let totalVolume: Double
+        let setCount: Int
+
+        var id: UUID { sessionID }
+    }
+
+    struct WeeklyVolumePoint: Identifiable, Equatable {
+        let weekStart: Date
+        let volume: Double
+
+        var id: Date { weekStart }
+    }
+
+    struct DashboardSnapshot: Equatable {
+        let performancePoints: [PerformancePoint]
+        let weeklyVolumePoints: [WeeklyVolumePoint]
+        let trend: TrendDirection
+        let lastWorkoutDate: Date?
+        let bestWeight: Double?
+        let bestEstimatedOneRepMax: Double?
+        let recentAverageTopSet: Double?
+        let previousAverageTopSet: Double?
+    }
+
+    static func makeSnapshot(
+        sessions: [WorkoutSession],
+        normalizedExerciseName: String,
+        interval: DateInterval?,
+        calendar: Calendar = .current
+    ) -> DashboardSnapshot {
+        let normalizedName = PreviousWeightLookupService.normalizeExerciseName(normalizedExerciseName)
+        guard normalizedName.isEmpty == false else {
+            return DashboardSnapshot(
+                performancePoints: [],
+                weeklyVolumePoints: [],
+                trend: .insufficientData,
+                lastWorkoutDate: nil,
+                bestWeight: nil,
+                bestEstimatedOneRepMax: nil,
+                recentAverageTopSet: nil,
+                previousAverageTopSet: nil
+            )
+        }
+
+        let completedSessions = sessions
+            .filter { $0.endedAt != nil }
+            .sorted { lhs, rhs in
+                lhs.startedAt < rhs.startedAt
+            }
+
+        var performancePoints: [PerformancePoint] = []
+        for session in completedSessions {
+            if let interval, interval.contains(session.startedAt) == false {
+                continue
+            }
+
+            var matchingSets: [SetEntry] = []
+            for entry in session.entries {
+                let normalizedEntryName = PreviousWeightLookupService.normalizeExerciseName(entry.exerciseName)
+                if normalizedEntryName == normalizedName {
+                    matchingSets.append(contentsOf: entry.sets)
+                }
+            }
+
+            guard matchingSets.isEmpty == false else {
+                continue
+            }
+
+            let topSetWeight = matchingSets.map(\.weight).max() ?? 0
+            let topOneRepMax = matchingSets
+                .map { estimatedOneRepMax(weight: $0.weight, reps: $0.reps) }
+                .max() ?? 0
+            let totalVolume = matchingSets.reduce(0) { subtotal, set in
+                subtotal + (set.weight * Double(set.reps))
+            }
+
+            performancePoints.append(
+                PerformancePoint(
+                    sessionID: session.id,
+                    date: session.startedAt,
+                    topSetWeight: topSetWeight,
+                    estimatedOneRepMax: topOneRepMax,
+                    totalVolume: totalVolume,
+                    setCount: matchingSets.count
+                )
+            )
+        }
+
+        let groupedByWeek = Dictionary(grouping: performancePoints) { point in
+            calendar.dateInterval(of: .weekOfYear, for: point.date)?.start
+                ?? calendar.startOfDay(for: point.date)
+        }
+
+        let weeklyVolumePoints = groupedByWeek
+            .map { weekStart, points in
+                WeeklyVolumePoint(
+                    weekStart: weekStart,
+                    volume: points.reduce(0) { $0 + $1.totalVolume }
+                )
+            }
+            .sorted { lhs, rhs in
+                lhs.weekStart < rhs.weekStart
+            }
+
+        let topSetWeights = performancePoints.map(\.topSetWeight)
+        let recentWeights = Array(topSetWeights.suffix(4))
+        let previousWeights = Array(topSetWeights.dropLast(recentWeights.count).suffix(4))
+
+        return DashboardSnapshot(
+            performancePoints: performancePoints,
+            weeklyVolumePoints: weeklyVolumePoints,
+            trend: classifyTrend(weights: topSetWeights),
+            lastWorkoutDate: performancePoints.last?.date,
+            bestWeight: performancePoints.map(\.topSetWeight).max(),
+            bestEstimatedOneRepMax: performancePoints.map(\.estimatedOneRepMax).max(),
+            recentAverageTopSet: average(recentWeights),
+            previousAverageTopSet: average(previousWeights)
+        )
+    }
+
+    static func estimatedOneRepMax(weight: Double, reps: Int) -> Double {
+        let safeWeight = max(0, weight)
+        let safeReps = max(0, reps)
+        return safeWeight * (1 + (Double(safeReps) / 30))
+    }
+
+    static func classifyTrend(
+        weights: [Double],
+        minimumSampleCount: Int = 3,
+        relativeThreshold: Double = 0.005,
+        absoluteThreshold: Double = 1
+    ) -> TrendDirection {
+        guard weights.count >= minimumSampleCount else {
+            return .insufficientData
+        }
+
+        let values = weights.map { max(0, $0) }
+        let n = Double(values.count)
+        let xSum = (n - 1) * n / 2
+        let xSquaredSum = (n - 1) * n * (2 * n - 1) / 6
+
+        var xySum = 0.0
+        var ySum = 0.0
+        for (index, value) in values.enumerated() {
+            let x = Double(index)
+            xySum += x * value
+            ySum += value
+        }
+
+        let denominator = (n * xSquaredSum) - (xSum * xSum)
+        guard denominator != 0 else {
+            return .flat
+        }
+
+        let slope = ((n * xySum) - (xSum * ySum)) / denominator
+        let averageWeight = ySum / n
+        let threshold = max(absoluteThreshold, abs(averageWeight) * relativeThreshold)
+
+        if slope > threshold {
+            return .up
+        }
+        if slope < -threshold {
+            return .down
+        }
+        return .flat
+    }
+
+    private static func average(_ values: [Double]) -> Double? {
+        guard values.isEmpty == false else {
+            return nil
+        }
+        return values.reduce(0, +) / Double(values.count)
+    }
+}

@@ -49,3 +49,83 @@ struct WorkoutTypeSeeder {
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 }
+
+struct WorkoutTypeManager {
+    enum ValidationError: Error, Equatable, LocalizedError {
+        case emptyName
+        case duplicateName
+
+        var errorDescription: String? {
+            switch self {
+            case .emptyName:
+                return "Workout type name cannot be empty."
+            case .duplicateName:
+                return "A workout type with this name already exists."
+            }
+        }
+    }
+
+    @MainActor
+    static func create(name: String, context: ModelContext) throws -> WorkoutType {
+        let sanitizedName = try validate(name: name, excludingWorkoutTypeID: nil, context: context)
+        let existingTypes = try context.fetch(FetchDescriptor<WorkoutType>())
+        let nextSortOrder = (existingTypes.map(\.sortOrder).max() ?? -1) + 1
+
+        let workoutType = WorkoutType(
+            name: sanitizedName,
+            sortOrder: nextSortOrder
+        )
+        context.insert(workoutType)
+        try context.save()
+
+        return workoutType
+    }
+
+    @MainActor
+    static func rename(_ workoutType: WorkoutType, to name: String, context: ModelContext) throws {
+        let sanitizedName = try validate(name: name, excludingWorkoutTypeID: workoutType.id, context: context)
+        workoutType.name = sanitizedName
+
+        if context.hasChanges {
+            try context.save()
+        }
+    }
+
+    @MainActor
+    static func archive(_ workoutType: WorkoutType, context: ModelContext) throws {
+        guard workoutType.isArchived == false else {
+            return
+        }
+
+        workoutType.isArchived = true
+        try context.save()
+    }
+
+    private static func validate(
+        name: String,
+        excludingWorkoutTypeID: UUID?,
+        context: ModelContext
+    ) throws -> String {
+        let sanitizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedCandidate = WorkoutTypeSeeder.normalize(sanitizedName)
+
+        guard normalizedCandidate.isEmpty == false else {
+            throw ValidationError.emptyName
+        }
+
+        let existingTypes = try context.fetch(FetchDescriptor<WorkoutType>())
+        let hasDuplicate = existingTypes.contains { existingType in
+            if let excludingWorkoutTypeID, existingType.id == excludingWorkoutTypeID {
+                return false
+            }
+
+            return WorkoutTypeSeeder.normalize(existingType.name) == normalizedCandidate
+        }
+
+        guard hasDuplicate == false else {
+            throw ValidationError.duplicateName
+        }
+
+        return sanitizedName
+    }
+}

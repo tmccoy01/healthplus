@@ -280,6 +280,8 @@ This is sequenced for collaboration so you can review and adjust each layer.
 
 ## Phase 0: Foundation (Session 1)
 
+Status: Complete (verified 2026-02-28)
+
 Goals:
 - Create SwiftUI app shell.
 - Add SwiftData container.
@@ -294,8 +296,13 @@ Deliverables:
 Acceptance criteria:
 - App boots cleanly with no runtime model errors.
 - Seed logic is idempotent (no duplicate default types).
+- Checkoff evidence:
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
+  - Seeder idempotency + normalization tests passing in `WorkoutTypeSeederTests`.
 
 ## Phase 1: Workout Type Management (Session 1-2)
+
+Status: Complete (verified 2026-02-28)
 
 Goals:
 - CRUD for workout types.
@@ -308,6 +315,11 @@ Deliverables:
 Acceptance criteria:
 - User can add/edit/archive types.
 - Existing sessions remain intact after type archiving.
+- Checkoff evidence:
+  - Settings screen supports add/edit/archive for workout types.
+  - Validation blocks empty and duplicate names (case/whitespace-insensitive).
+  - Archive behavior preserves existing session relationship (tested).
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes.
 
 ## Phase 2: Logging Flow (Session 2-4)
 
@@ -359,9 +371,9 @@ Acceptance criteria:
 ## 7) Backlog (Detailed)
 
 MVP must-do tickets:
-- [ ] Define SwiftData models + relationships
-- [ ] App launch seeding service for default workout types
-- [ ] Workout type CRUD UI
+- [x] Define SwiftData models + relationships
+- [x] App launch seeding service for default workout types
+- [x] Workout type CRUD UI
 - [ ] Start/stop workout session
 - [ ] Add/remove exercise entry inside session
 - [ ] Add/remove/edit set entries

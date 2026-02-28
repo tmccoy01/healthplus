@@ -104,10 +104,13 @@ Core entities:
 
 ## Current Status
 
-Phase 0 foundation is scaffolded in source:
+Phase 0 and Phase 1 are complete in source:
 - SwiftUI app shell with 4 tabs (`Log`, `History`, `Stats`, `Settings`)
 - SwiftData model layer (`WorkoutType`, `ExerciseTemplate`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`, `BodyMetric`)
 - Idempotent default workout-type seed service
+- Settings workout type management with add/edit/archive flows
+- Name validation (no empty names, no duplicates ignoring case/whitespace)
+- Archive-safe behavior that preserves existing session links
 - Theme tokens (`colors`, `spacing`, `type scale`) and shared placeholder component
 
 Detailed implementation plan lives in [PLAN.md](/Users/tannermccoy/Development/health+/PLAN.md).

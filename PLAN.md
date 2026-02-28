@@ -385,6 +385,8 @@ Post-MVP strong candidates:
 
 ## 8) Quality Strategy
 
+Testing is non-negotiable for this project: everything must be **VERY** well tested.
+
 ## 8.1 Unit Tests
 
 Focus on deterministic logic:
@@ -431,6 +433,7 @@ MVP is done when:
 - User can review history and visualize progress over time.
 - Previous workout performance appears while logging.
 - Core stat logic is tested and stable.
+- New and changed behavior is covered by robust automated tests, with no critical untested paths.
 
 ## 11) How We Build This Together (Collaboration Contract)
 

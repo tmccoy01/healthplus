@@ -104,7 +104,12 @@ Core entities:
 
 ## Current Status
 
-Project is in active planning and build setup.  
+Phase 0 foundation is scaffolded in source:
+- SwiftUI app shell with 4 tabs (`Log`, `History`, `Stats`, `Settings`)
+- SwiftData model layer (`WorkoutType`, `ExerciseTemplate`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`, `BodyMetric`)
+- Idempotent default workout-type seed service
+- Theme tokens (`colors`, `spacing`, `type scale`) and shared placeholder component
+
 Detailed implementation plan lives in [PLAN.md](/Users/tannermccoy/Development/health+/PLAN.md).
 
 ## Building This Together

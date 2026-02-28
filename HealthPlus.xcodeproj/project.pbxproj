@@ -1,0 +1,543 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B30000000000000000000001 /* HealthPlusApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* HealthPlusApp.swift */; };
+		B30000000000000000000002 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* RootTabView.swift */; };
+		B30000000000000000000003 /* BodyMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* BodyMetric.swift */; };
+		B30000000000000000000004 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* ExerciseEntry.swift */; };
+		B30000000000000000000005 /* ExerciseTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* ExerciseTemplate.swift */; };
+		B30000000000000000000006 /* SetEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* SetEntry.swift */; };
+		B30000000000000000000007 /* WorkoutSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* WorkoutSession.swift */; };
+		B30000000000000000000008 /* WorkoutType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000008 /* WorkoutType.swift */; };
+		B30000000000000000000009 /* WorkoutTypeSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000009 /* WorkoutTypeSeeder.swift */; };
+		B3000000000000000000000A /* HistoryRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000A /* HistoryRootView.swift */; };
+		B3000000000000000000000B /* LogRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000B /* LogRootView.swift */; };
+		B3000000000000000000000C /* StatsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000C /* StatsRootView.swift */; };
+		B3000000000000000000000D /* WorkoutTypesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000D /* WorkoutTypesSettingsView.swift */; };
+		B3000000000000000000000E /* PlaceholderCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000E /* PlaceholderCard.swift */; };
+		B3000000000000000000000F /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000000F /* AppTheme.swift */; };
+		B30000000000000000000010 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000010 /* Color+Hex.swift */; };
+		B30000000000000000000011 /* WorkoutTypeSeederTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000013 /* WorkoutTypeSeederTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000026 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A00000000000000000000010;
+			remoteInfo = HealthPlus;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		F20000000000000000000001 /* HealthPlusApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPlusApp.swift; sourceTree = "<group>"; };
+		F20000000000000000000002 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
+		F20000000000000000000003 /* BodyMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetric.swift; sourceTree = "<group>"; };
+		F20000000000000000000004 /* ExerciseEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseEntry.swift; sourceTree = "<group>"; };
+		F20000000000000000000005 /* ExerciseTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTemplate.swift; sourceTree = "<group>"; };
+		F20000000000000000000006 /* SetEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetEntry.swift; sourceTree = "<group>"; };
+		F20000000000000000000007 /* WorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSession.swift; sourceTree = "<group>"; };
+		F20000000000000000000008 /* WorkoutType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutType.swift; sourceTree = "<group>"; };
+		F20000000000000000000009 /* WorkoutTypeSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTypeSeeder.swift; sourceTree = "<group>"; };
+		F2000000000000000000000A /* HistoryRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRootView.swift; sourceTree = "<group>"; };
+		F2000000000000000000000B /* LogRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogRootView.swift; sourceTree = "<group>"; };
+		F2000000000000000000000C /* StatsRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsRootView.swift; sourceTree = "<group>"; };
+		F2000000000000000000000D /* WorkoutTypesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTypesSettingsView.swift; sourceTree = "<group>"; };
+		F2000000000000000000000E /* PlaceholderCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderCard.swift; sourceTree = "<group>"; };
+		F2000000000000000000000F /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		F20000000000000000000010 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		F20000000000000000000011 /* HealthPlus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HealthPlus.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F20000000000000000000012 /* HealthPlusTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthPlusTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F20000000000000000000013 /* WorkoutTypeSeederTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutTypeSeederTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000018 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000024 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000004 /* App */,
+				A00000000000000000000005 /* Core */,
+				A00000000000000000000008 /* Features */,
+				A0000000000000000000000D /* Shared */,
+				A00000000000000000000020 /* HealthPlusTests */,
+				A00000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000011 /* HealthPlus.app */,
+				F20000000000000000000012 /* HealthPlusTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000001 /* HealthPlusApp.swift */,
+				F20000000000000000000002 /* RootTabView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000005 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000006 /* Models */,
+				A00000000000000000000007 /* Services */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000006 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000003 /* BodyMetric.swift */,
+				F20000000000000000000004 /* ExerciseEntry.swift */,
+				F20000000000000000000005 /* ExerciseTemplate.swift */,
+				F20000000000000000000006 /* SetEntry.swift */,
+				F20000000000000000000007 /* WorkoutSession.swift */,
+				F20000000000000000000008 /* WorkoutType.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000007 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000009 /* WorkoutTypeSeeder.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000008 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000009 /* History */,
+				A0000000000000000000000A /* Logging */,
+				A0000000000000000000000B /* Stats */,
+				A0000000000000000000000C /* WorkoutTypes */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000009 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000A /* HistoryRootView.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000A /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000B /* LogRootView.swift */,
+			);
+			path = Logging;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000B /* Stats */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000C /* StatsRootView.swift */,
+			);
+			path = Stats;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000C /* WorkoutTypes */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000D /* WorkoutTypesSettingsView.swift */,
+			);
+			path = WorkoutTypes;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000D /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000000E /* Components */,
+				A0000000000000000000000F /* Theme */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000E /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000E /* PlaceholderCard.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000F /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				F2000000000000000000000F /* AppTheme.swift */,
+				F20000000000000000000010 /* Color+Hex.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000020 /* HealthPlusTests */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000013 /* WorkoutTypeSeederTests.swift */,
+			);
+			path = HealthPlusTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000010 /* HealthPlus */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000012 /* Build configuration list for PBXNativeTarget "HealthPlus" */;
+			buildPhases = (
+				A00000000000000000000017 /* Sources */,
+				A00000000000000000000018 /* Frameworks */,
+				A00000000000000000000019 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HealthPlus;
+			productName = HealthPlus;
+			productReference = F20000000000000000000011 /* HealthPlus.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A00000000000000000000021 /* HealthPlusTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000022 /* Build configuration list for PBXNativeTarget "HealthPlusTests" */;
+			buildPhases = (
+				A00000000000000000000023 /* Sources */,
+				A00000000000000000000024 /* Frameworks */,
+				A00000000000000000000025 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A00000000000000000000027 /* PBXTargetDependency */,
+			);
+			name = HealthPlusTests;
+			productName = HealthPlusTests;
+			productReference = F20000000000000000000012 /* HealthPlusTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A00000000000000000000010 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					A00000000000000000000021 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A00000000000000000000010;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000011 /* Build configuration list for PBXProject "HealthPlus" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000002;
+			productRefGroup = A00000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000010 /* HealthPlus */,
+				A00000000000000000000021 /* HealthPlusTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000019 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000025 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000017 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B30000000000000000000001 /* HealthPlusApp.swift in Sources */,
+				B30000000000000000000002 /* RootTabView.swift in Sources */,
+				B30000000000000000000003 /* BodyMetric.swift in Sources */,
+				B30000000000000000000004 /* ExerciseEntry.swift in Sources */,
+				B30000000000000000000005 /* ExerciseTemplate.swift in Sources */,
+				B30000000000000000000006 /* SetEntry.swift in Sources */,
+				B30000000000000000000007 /* WorkoutSession.swift in Sources */,
+				B30000000000000000000008 /* WorkoutType.swift in Sources */,
+				B30000000000000000000009 /* WorkoutTypeSeeder.swift in Sources */,
+				B3000000000000000000000A /* HistoryRootView.swift in Sources */,
+				B3000000000000000000000B /* LogRootView.swift in Sources */,
+				B3000000000000000000000C /* StatsRootView.swift in Sources */,
+				B3000000000000000000000D /* WorkoutTypesSettingsView.swift in Sources */,
+				B3000000000000000000000E /* PlaceholderCard.swift in Sources */,
+				B3000000000000000000000F /* AppTheme.swift in Sources */,
+				B30000000000000000000010 /* Color+Hex.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A00000000000000000000023 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B30000000000000000000011 /* WorkoutTypeSeederTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A00000000000000000000027 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A00000000000000000000010 /* HealthPlus */;
+			targetProxy = A00000000000000000000026 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000013 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A00000000000000000000015 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "health+";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tannermccoy.HealthPlus;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A00000000000000000000016 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "health+";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tannermccoy.HealthPlus;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A00000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tannermccoy.HealthPlusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HealthPlus.app/HealthPlus";
+			};
+			name = Debug;
+		};
+		A00000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tannermccoy.HealthPlusTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HealthPlus.app/HealthPlus";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000011 /* Build configuration list for PBXProject "HealthPlus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000013 /* Debug */,
+				A00000000000000000000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000012 /* Build configuration list for PBXNativeTarget "HealthPlus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000015 /* Debug */,
+				A00000000000000000000016 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000022 /* Build configuration list for PBXNativeTarget "HealthPlusTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000028 /* Debug */,
+				A00000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}

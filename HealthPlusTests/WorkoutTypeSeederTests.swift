@@ -66,6 +66,106 @@ final class WorkoutTypeSeederTests: XCTestCase {
 }
 
 @MainActor
+final class LogFeedTimelineServiceTests: XCTestCase {
+    func testGroupSessionsByDaySortsByDayAndSessionStartDescending() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+
+        let dayOneMorning = try XCTUnwrap(
+            calendar.date(from: DateComponents(year: 2026, month: 2, day: 24, hour: 9, minute: 0))
+        )
+        let dayOneEvening = try XCTUnwrap(
+            calendar.date(from: DateComponents(year: 2026, month: 2, day: 24, hour: 18, minute: 30))
+        )
+        let dayZero = try XCTUnwrap(
+            calendar.date(from: DateComponents(year: 2026, month: 2, day: 23, hour: 20, minute: 15))
+        )
+
+        let first = WorkoutSession(startedAt: dayOneMorning, endedAt: dayOneMorning.addingTimeInterval(3600))
+        let second = WorkoutSession(startedAt: dayOneEvening, endedAt: dayOneEvening.addingTimeInterval(3600))
+        let third = WorkoutSession(startedAt: dayZero, endedAt: dayZero.addingTimeInterval(3600))
+
+        let groups = LogFeedTimelineService.groupSessionsByDay([first, third, second], calendar: calendar)
+
+        XCTAssertEqual(groups.count, 2)
+        XCTAssertEqual(groups[0].dayStart, calendar.startOfDay(for: dayOneMorning))
+        XCTAssertEqual(groups[0].sessions.map(\.id), [second.id, first.id])
+        XCTAssertEqual(groups[1].dayStart, calendar.startOfDay(for: dayZero))
+        XCTAssertEqual(groups[1].sessions.map(\.id), [third.id])
+    }
+
+    func testSummaryLinesIncludesSetCountAndOverflowIndicator() {
+        let session = WorkoutSession(
+            startedAt: Date(timeIntervalSince1970: 1_760_000_000),
+            endedAt: Date(timeIntervalSince1970: 1_760_003_600)
+        )
+
+        let cableRow = ExerciseEntry(session: session, exerciseName: "Cable Row", orderIndex: 0)
+        cableRow.sets = [
+            makeSet(for: cableRow, index: 1),
+            makeSet(for: cableRow, index: 2),
+            makeSet(for: cableRow, index: 3),
+            makeSet(for: cableRow, index: 4)
+        ]
+
+        let facePull = ExerciseEntry(session: session, exerciseName: "Face Pull", orderIndex: 1)
+        facePull.sets = [
+            makeSet(for: facePull, index: 1),
+            makeSet(for: facePull, index: 2)
+        ]
+
+        let curls = ExerciseEntry(session: session, exerciseName: "Curls", orderIndex: 2)
+        curls.sets = [makeSet(for: curls, index: 1)]
+
+        let rearDelt = ExerciseEntry(session: session, exerciseName: "Rear Delt Fly", orderIndex: 3)
+        rearDelt.sets = [makeSet(for: rearDelt, index: 1)]
+
+        session.entries = [rearDelt, curls, facePull, cableRow]
+
+        let lines = LogFeedTimelineService.summaryLines(for: session, maxLineCount: 3)
+
+        XCTAssertEqual(lines, ["4x Cable Row", "2x Face Pull", "+2 more"])
+    }
+
+    func testSummaryLinesUsesFallbackWhenSessionHasNoExercises() {
+        let session = WorkoutSession(
+            startedAt: Date(timeIntervalSince1970: 1_760_000_000),
+            endedAt: Date(timeIntervalSince1970: 1_760_003_600)
+        )
+
+        XCTAssertEqual(
+            LogFeedTimelineService.summaryLines(for: session),
+            ["No exercises logged"]
+        )
+    }
+
+    func testDurationLabelHandlesSubMinuteAndHourMinuteFormats() {
+        let shortSession = WorkoutSession(
+            startedAt: Date(timeIntervalSince1970: 1_760_000_000),
+            endedAt: Date(timeIntervalSince1970: 1_760_000_030)
+        )
+        XCTAssertEqual(LogFeedTimelineService.durationLabel(for: shortSession), "<1m")
+
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = [.pad]
+
+        let longSession = WorkoutSession(
+            startedAt: Date(timeIntervalSince1970: 1_760_000_000),
+            endedAt: Date(timeIntervalSince1970: 1_760_005_400)
+        )
+
+        let longLabel = LogFeedTimelineService.durationLabel(for: longSession, formatter: formatter)
+        XCTAssertTrue(longLabel == "1:30" || longLabel == "01:30")
+    }
+
+    private func makeSet(for entry: ExerciseEntry, index: Int) -> SetEntry {
+        SetEntry(exerciseEntry: entry, setIndex: index, reps: 8, weight: 135)
+    }
+}
+
+@MainActor
 final class WorkoutTypeManagerTests: XCTestCase {
     func testCreateAddsWorkoutTypeWithTrimmedNameAndNextSortOrder() throws {
         let store = try makeInMemoryStore()

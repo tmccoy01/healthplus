@@ -737,3 +737,95 @@ struct ExerciseStatsEngine {
         return values.reduce(0, +) / Double(values.count)
     }
 }
+
+struct LogFeedTimelineService {
+    struct DayGroup: Equatable {
+        let dayStart: Date
+        let sessions: [WorkoutSession]
+    }
+
+    static func groupSessionsByDay(
+        _ sessions: [WorkoutSession],
+        calendar: Calendar = .current
+    ) -> [DayGroup] {
+        let grouped = Dictionary(grouping: sessions) { session in
+            calendar.startOfDay(for: session.startedAt)
+        }
+
+        return grouped
+            .map { dayStart, sessionsForDay in
+                DayGroup(
+                    dayStart: dayStart,
+                    sessions: sessionsForDay.sorted { lhs, rhs in
+                        lhs.startedAt > rhs.startedAt
+                    }
+                )
+            }
+            .sorted { lhs, rhs in
+                lhs.dayStart > rhs.dayStart
+            }
+    }
+
+    static func summaryLines(for session: WorkoutSession, maxLineCount: Int = 3) -> [String] {
+        let rawLines = session.entries
+            .sorted { lhs, rhs in
+                if lhs.orderIndex == rhs.orderIndex {
+                    return lhs.exerciseName.localizedCaseInsensitiveCompare(rhs.exerciseName) == .orderedAscending
+                }
+                return lhs.orderIndex < rhs.orderIndex
+            }
+            .map { entry in
+                let name = entry.exerciseName.trimmingCharacters(in: .whitespacesAndNewlines)
+                let displayName = name.isEmpty ? "Untitled Exercise" : name
+                let setCount = entry.sets.count
+                if setCount > 0 {
+                    return "\(setCount)x \(displayName)"
+                }
+                return displayName
+            }
+
+        guard rawLines.isEmpty == false else {
+            return ["No exercises logged"]
+        }
+
+        guard maxLineCount > 0 else {
+            return []
+        }
+
+        if rawLines.count <= maxLineCount {
+            return rawLines
+        }
+
+        if maxLineCount == 1 {
+            return ["+\(rawLines.count) exercises"]
+        }
+
+        let visibleCount = maxLineCount - 1
+        let remainingCount = rawLines.count - visibleCount
+        return Array(rawLines.prefix(visibleCount)) + ["+\(remainingCount) more"]
+    }
+
+    static func durationLabel(
+        for session: WorkoutSession,
+        formatter: DateComponentsFormatter = durationFormatter
+    ) -> String? {
+        guard let endedAt = session.endedAt else {
+            return nil
+        }
+
+        let duration = max(0, endedAt.timeIntervalSince(session.startedAt))
+        guard duration >= 60 else {
+            return "<1m"
+        }
+
+        return formatter.string(from: duration) ?? nil
+    }
+
+    private static let durationFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        formatter.zeroFormattingBehavior = [.dropLeading, .dropTrailing]
+        return formatter
+    }()
+}

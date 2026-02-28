@@ -4,21 +4,18 @@ import SwiftUI
 struct LogRootView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @Query(
-        filter: #Predicate<WorkoutSession> { session in
-            session.endedAt == nil
-        },
-        sort: \WorkoutSession.startedAt,
-        order: .reverse
-    )
-    private var activeSessions: [WorkoutSession]
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse)
+    private var allSessions: [WorkoutSession]
 
     @Query(sort: \WorkoutType.sortOrder)
     private var allWorkoutTypes: [WorkoutType]
 
     @State private var selectedWorkoutTypeID: UUID?
     @State private var draftSessionNotes = ""
+    @State private var isStartSheetPresented = false
+    @State private var pendingDeleteSession: WorkoutSession?
     @State private var actionErrorMessage: String?
+    @State private var editMode: EditMode = .inactive
 
     private var activeWorkoutTypes: [WorkoutType] {
         allWorkoutTypes
@@ -32,7 +29,19 @@ struct LogRootView: View {
     }
 
     private var activeSession: WorkoutSession? {
-        activeSessions.first
+        allSessions.first { $0.endedAt == nil }
+    }
+
+    private var completedSessions: [WorkoutSession] {
+        allSessions
+            .filter { $0.endedAt != nil }
+            .sorted { lhs, rhs in
+                lhs.startedAt > rhs.startedAt
+            }
+    }
+
+    private var groupedCompletedSessions: [LogFeedTimelineService.DayGroup] {
+        LogFeedTimelineService.groupSessionsByDay(completedSessions)
     }
 
     private var selectedWorkoutType: WorkoutType? {
@@ -40,6 +49,14 @@ struct LogRootView: View {
             return activeWorkoutTypes.first(where: { $0.id == selectedWorkoutTypeID })
         }
         return activeWorkoutTypes.first
+    }
+
+    private var latestCompletedSession: WorkoutSession? {
+        completedSessions.first
+    }
+
+    private var isEditingFeed: Bool {
+        editMode == .active
     }
 
     var body: some View {
@@ -55,7 +72,7 @@ struct LogRootView: View {
                         finish(activeSession)
                     }
                 } else {
-                    startSessionView
+                    timelineFeed
                 }
             }
             .scrollContentBackground(.hidden)
@@ -63,6 +80,55 @@ struct LogRootView: View {
             .navigationTitle("Log")
             .navigationBarTitleDisplayMode(.inline)
             .appNavigationChrome()
+            .environment(\.editMode, $editMode)
+            .toolbar {
+                if activeSession == nil {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(isEditingFeed ? "Done" : "Edit") {
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                editMode = isEditingFeed ? .inactive : .active
+                            }
+                        }
+                        .accessibilityIdentifier("log.feed.toolbar.edit")
+                    }
+
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isStartSheetPresented = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        .accessibilityIdentifier("log.feed.toolbar.add")
+                    }
+                }
+            }
+            .sheet(isPresented: $isStartSheetPresented) {
+                startSessionSheet
+            }
+            .confirmationDialog(
+                "Delete Session",
+                isPresented: Binding(
+                    get: { pendingDeleteSession != nil },
+                    set: { isPresented in
+                        if isPresented == false {
+                            pendingDeleteSession = nil
+                        }
+                    }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let pendingDeleteSession {
+                        delete(pendingDeleteSession)
+                    }
+                }
+
+                Button("Cancel", role: .cancel) {
+                    pendingDeleteSession = nil
+                }
+            } message: {
+                Text("This removes the session and all logged exercises and sets.")
+            }
             .alert(
                 "Action Failed",
                 isPresented: Binding(
@@ -86,7 +152,7 @@ struct LogRootView: View {
         }
     }
 
-    private var startSessionView: some View {
+    private var timelineFeed: some View {
         List {
             if activeWorkoutTypes.isEmpty {
                 Section {
@@ -99,6 +165,117 @@ struct LogRootView: View {
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
             } else {
+                Section {
+                    GlassCard(style: .chrome, padding: AppTheme.Spacing.medium, cornerRadius: AppTheme.Radius.medium) {
+                        HStack(spacing: AppTheme.Spacing.small) {
+                            Button {
+                                startSession()
+                            } label: {
+                                Label("Start Session", systemImage: "plus.circle.fill")
+                                    .font(AppTheme.Typography.caption)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.Colors.accent)
+                            .accessibilityIdentifier("log.start.button")
+
+                            if let latestCompletedSession {
+                                Button {
+                                    startFrom(latestCompletedSession)
+                                } label: {
+                                    Label("Start Again", systemImage: "arrow.clockwise")
+                                        .font(AppTheme.Typography.caption)
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.bordered)
+                                .accessibilityIdentifier("log.feed.quick.startAgain")
+                            }
+                        }
+                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                    .listRowBackground(Color.clear)
+                }
+            }
+
+            if isEditingFeed {
+                Section {
+                    Label("Editing sessions", systemImage: "slider.horizontal.3")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                        .accessibilityIdentifier("log.feed.editing.indicator")
+                }
+                .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+            }
+
+            if groupedCompletedSessions.isEmpty {
+                Section {
+                    PlaceholderCard(
+                        title: "No Sessions Yet",
+                        message: "Save your first workout to start building your timeline."
+                    )
+                    .accessibilityIdentifier("log.feed.empty.sessions")
+                    .listRowInsets(EdgeInsets())
+                }
+                .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+            } else {
+                ForEach(groupedCompletedSessions, id: \.dayStart) { group in
+                    Section {
+                        ForEach(group.sessions, id: \.id) { session in
+                            NavigationLink {
+                                LogSessionDetailView(session: session)
+                            } label: {
+                                SessionSummaryRow(
+                                    session: session,
+                                    summaryLines: LogFeedTimelineService.summaryLines(for: session),
+                                    durationLabel: LogFeedTimelineService.durationLabel(for: session)
+                                )
+                            }
+                            .accessibilityIdentifier("log.feed.row")
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                Button {
+                                    startFrom(session)
+                                } label: {
+                                    Label("Start Again", systemImage: "play.fill")
+                                }
+                                .tint(AppTheme.Colors.accent)
+
+                                Button {
+                                    duplicate(session)
+                                } label: {
+                                    Label("Duplicate", systemImage: "doc.on.doc")
+                                }
+                                .tint(.blue)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    pendingDeleteSession = session
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                        }
+                        .onDelete { offsets in
+                            guard let offset = offsets.first, group.sessions.indices.contains(offset) else {
+                                return
+                            }
+                            pendingDeleteSession = group.sessions[offset]
+                        }
+                    } header: {
+                        Text(group.dayStart, format: .dateTime.weekday(.wide).month().day().year())
+                            .font(AppTheme.Typography.caption)
+                            .foregroundStyle(AppTheme.Colors.textSecondary)
+                    }
+                    .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .accessibilityIdentifier("log.feed.list")
+    }
+
+    private var startSessionSheet: some View {
+        NavigationStack {
+            Form {
                 Section("Start Workout") {
                     Picker("Workout Type", selection: Binding(
                         get: { selectedWorkoutTypeID ?? activeWorkoutTypes.first?.id ?? UUID() },
@@ -119,23 +296,30 @@ struct LogRootView: View {
                     .lineLimit(2...4)
                     .accessibilityIdentifier("log.start.sessionNotesField")
                 }
-                .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
 
                 Section {
                     Button {
                         startSession()
+                        isStartSheetPresented = false
                     } label: {
                         Label("Start Session", systemImage: "play.fill")
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(AppTheme.Colors.accent)
-                    .accessibilityIdentifier("log.start.button")
+                    .accessibilityIdentifier("log.start.sheet.button")
                 }
-                .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+            }
+            .navigationTitle("Start Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        isStartSheetPresented = false
+                    }
+                }
             }
         }
-        .listStyle(.insetGrouped)
     }
 
     private var backgroundGradient: LinearGradient {
@@ -155,8 +339,107 @@ struct LogRootView: View {
                 context: modelContext
             )
             draftSessionNotes = ""
+            editMode = .inactive
         } catch {
             actionErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func startFrom(_ source: WorkoutSession) {
+        do {
+            let newSession = try WorkoutSessionManager.startSession(
+                workoutType: source.workoutType,
+                notes: source.sessionNotes,
+                context: modelContext
+            )
+
+            let orderedEntries = source.entries.sorted { lhs, rhs in
+                if lhs.orderIndex == rhs.orderIndex {
+                    return lhs.exerciseName.localizedCaseInsensitiveCompare(rhs.exerciseName) == .orderedAscending
+                }
+                return lhs.orderIndex < rhs.orderIndex
+            }
+
+            for entry in orderedEntries {
+                _ = try WorkoutSessionManager.addExercise(
+                    to: newSession,
+                    name: entry.exerciseName,
+                    notes: entry.entryNotes,
+                    context: modelContext
+                )
+            }
+
+            editMode = .inactive
+        } catch {
+            actionErrorMessage = error.localizedDescription
+        }
+    }
+
+    private func duplicate(_ source: WorkoutSession) {
+        do {
+            let copiedEnd = Date.now
+            let sourceEnd = source.endedAt ?? source.startedAt
+            let sourceDuration = max(0, sourceEnd.timeIntervalSince(source.startedAt))
+            let copiedStart = copiedEnd.addingTimeInterval(-sourceDuration)
+
+            let copiedSession = WorkoutSession(
+                startedAt: copiedStart,
+                endedAt: copiedEnd,
+                workoutType: source.workoutType,
+                sessionNotes: source.sessionNotes
+            )
+            modelContext.insert(copiedSession)
+
+            let orderedEntries = source.entries.sorted { lhs, rhs in
+                if lhs.orderIndex == rhs.orderIndex {
+                    return lhs.exerciseName.localizedCaseInsensitiveCompare(rhs.exerciseName) == .orderedAscending
+                }
+                return lhs.orderIndex < rhs.orderIndex
+            }
+
+            for entry in orderedEntries {
+                let copiedEntry = ExerciseEntry(
+                    session: copiedSession,
+                    exerciseName: entry.exerciseName,
+                    orderIndex: entry.orderIndex,
+                    entryNotes: entry.entryNotes
+                )
+                modelContext.insert(copiedEntry)
+                if copiedSession.entries.contains(where: { $0.id == copiedEntry.id }) == false {
+                    copiedSession.entries.append(copiedEntry)
+                }
+
+                for set in WorkoutSessionManager.orderedSets(for: entry) {
+                    let copiedSet = SetEntry(
+                        exerciseEntry: copiedEntry,
+                        setIndex: set.setIndex,
+                        reps: set.reps,
+                        weight: set.weight,
+                        isWarmup: set.isWarmup,
+                        setNotes: set.setNotes,
+                        loggedAt: copiedEnd
+                    )
+                    modelContext.insert(copiedSet)
+                    if copiedEntry.sets.contains(where: { $0.id == copiedSet.id }) == false {
+                        copiedEntry.sets.append(copiedSet)
+                    }
+                }
+            }
+
+            try WorkoutSessionManager.saveIfNeeded(modelContext)
+        } catch {
+            actionErrorMessage = "Unable to duplicate session."
+        }
+    }
+
+    private func delete(_ session: WorkoutSession) {
+        modelContext.delete(session)
+
+        do {
+            try WorkoutSessionManager.saveIfNeeded(modelContext)
+            pendingDeleteSession = nil
+        } catch {
+            actionErrorMessage = "Unable to delete session."
         }
     }
 
@@ -166,6 +449,97 @@ struct LogRootView: View {
         } catch {
             actionErrorMessage = "Unable to save session."
         }
+    }
+}
+
+private struct LogSessionDetailView: View {
+    @Bindable var session: WorkoutSession
+
+    var body: some View {
+        SessionEditorView(
+            session: session,
+            title: "Session Detail",
+            showFinishButton: false,
+            finishButtonTitle: ""
+        )
+        .navigationTitle(session.workoutType?.name ?? "Session")
+        .navigationBarTitleDisplayMode(.inline)
+        .appNavigationChrome()
+    }
+}
+
+private struct TimelineDatePill: View {
+    let date: Date
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(date, format: .dateTime.weekday(.abbreviated))
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(AppTheme.Colors.textSecondary)
+
+            Text(date, format: .dateTime.day())
+                .font(.system(size: 18, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(AppTheme.Colors.textPrimary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background {
+            RoundedRectangle(cornerRadius: AppTheme.Radius.medium, style: .continuous)
+                .fill(AppTheme.material(.chrome))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.medium, style: .continuous)
+                        .stroke(AppTheme.Colors.hairline.opacity(0.52), lineWidth: 1)
+                )
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month().day()))
+        .accessibilityIdentifier("log.feed.row.datePill")
+    }
+}
+
+private struct SessionSummaryRow: View {
+    let session: WorkoutSession
+    let summaryLines: [String]
+    let durationLabel: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.medium) {
+            TimelineDatePill(date: session.startedAt)
+
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.xSmall) {
+                HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.small) {
+                    Text(session.workoutType?.name ?? "Workout")
+                        .font(AppTheme.Typography.sectionTitle)
+                        .foregroundStyle(AppTheme.Colors.textPrimary)
+                        .lineLimit(1)
+
+                    Spacer(minLength: AppTheme.Spacing.small)
+
+                    if let durationLabel {
+                        Text(durationLabel)
+                            .font(AppTheme.Typography.caption.monospacedDigit())
+                            .foregroundStyle(AppTheme.Colors.textSecondary)
+                            .accessibilityIdentifier("log.feed.row.duration")
+                    }
+                }
+
+                ForEach(Array(summaryLines.enumerated()), id: \.offset) { _, line in
+                    Text(line)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
+                        .lineLimit(1)
+                        .accessibilityIdentifier("log.feed.row.summary")
+                }
+
+                if session.sessionNotes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+                    Text(session.sessionNotes)
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .padding(.vertical, AppTheme.Spacing.xSmall)
     }
 }
 

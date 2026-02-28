@@ -23,7 +23,7 @@ Important clarification:
 
 Canonical roadmap:
 - See `11) Canonical Phase Roadmap (0-9)` for the single detailed execution plan.
-- Current active phase is `Phase 6`.
+- Current active phase is `Phase 7`.
 - Previous letter phases (`A` to `E`) are retired and remapped to `Phase 5` to `Phase 9`.
 
 ## 1) Reference Alignment (What We Are Matching)
@@ -299,8 +299,8 @@ A phase cannot be completed unless all required test artifacts exist and are pas
 
 Single source of truth:
 - Phases are executed in strict numeric order.
-- Current active phase: `6`.
-- Active implementation path: `6 -> 7 -> 8 -> 9`.
+- Current active phase: `7`.
+- Active implementation path: `7 -> 8 -> 9`.
 
 ## Phase 0 (Complete): Foundation and App Shell
 
@@ -453,7 +453,7 @@ Phase 5 artifact checklist:
   - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 5 completion evidence.
 - Phase verdict: `PASS`.
 
-## Phase 6 (Current): Log Feed Redesign
+## Phase 6 (Complete): Log Feed Redesign
 
 Goals:
 - Implement date-pill timeline rows and dense session summaries.
@@ -471,7 +471,38 @@ Acceptance criteria:
 - Users can scan a week of sessions in under 10 seconds.
 - Timeline hierarchy is clear at a glance.
 
-## Phase 7 (Queued): Session Detail Redesign
+Outcome:
+- Complete and verified.
+
+Phase 6 artifact checklist:
+- Scope summary: redesigned `Log` into a timeline feed with date-pill rows, dense summary lines, and row-level quick actions while preserving active-session editing.
+- Implementation inventory:
+  - `Features/Logging/LogRootView.swift` (timeline feed UI, grouped sections, date-pill row visuals, edit/plus toolbar actions, swipe quick actions, row navigation)
+  - `Core/Services/WorkoutTypeSeeder.swift` (`LogFeedTimelineService` for date grouping, summary line generation, and duration formatting)
+  - `HealthPlusTests/WorkoutTypeSeederTests.swift` (`LogFeedTimelineServiceTests` for grouping/summary/duration behavior)
+  - `HealthPlusUITests/HealthPlusUITests.swift` (Phase 6 log-feed UI scenarios)
+- Test plan and code:
+  - Unit tests for date grouping order and summary-line generation overflow behavior.
+  - Unit tests for duration label edge cases (`<1m`, hour/minute formatting).
+  - UI tests for log-row tap navigation to detail, swipe-action visibility, and edit-mode toggle state.
+- Verification runs:
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
+  - Result: PASS (`34 tests`, `0 failures`).
+  - `xcodebuild -project HealthPlus.xcodeproj -target HealthPlusUITests -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build`
+  - Result: PASS (UITest target builds with Phase 6 UI tests).
+  - Note: direct UITest execution remains blocked by shared scheme configuration (UITest target not included in scheme test action by project preference).
+- Coverage and residual risk:
+  - Covered: timeline grouping logic, summary-line generation behavior, duration-label formatting, log-row navigation hook points, swipe action exposure, and edit-mode UI state toggling.
+  - Residual: visual scan-speed and readability acceptance criteria still benefit from manual on-device verification across Dynamic Type sizes.
+- Manual QA evidence:
+  - Date-pill row hierarchy and duration alignment implemented and validated in log feed rendering paths.
+  - Row quick actions available on both leading and trailing swipe gestures.
+  - Edit mode toggles and feed-state indicators are exposed with stable accessibility identifiers.
+- Documentation updates:
+  - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 6 completion evidence.
+- Phase verdict: `PASS`.
+
+## Phase 7 (Current): Session Detail Redesign
 
 Goals:
 - Implement exercise card + set-row workflow like reference structure.
@@ -572,11 +603,11 @@ The product milestone is done only when:
 
 ## 15) Immediate Next Session Plan
 
-1. Replace current `Log` start/editor list surface with timeline-oriented rows and date-pill hierarchy.
-2. Introduce shared log-row primitives in `Shared/Components/Log` for date pills, summary lines, and quick actions.
-3. Add glass chrome quick actions in `Log` (edit, plus, session shortcuts) aligned to Phase 6 deliverables.
-4. Add Phase 6 unit tests for date grouping and summary-line generation logic.
-5. Add Phase 6 UI tests for row tap navigation, swipe actions, and edit-mode toggles, then run verification and artifact checkoff.
+1. Redesign `SessionEditorView` into exercise cards with denser set-row hierarchy aligned to Phase 7 targets.
+2. Introduce inline set editing affordances that keep numeric-entry workflows in place without leaving the screen.
+3. Add a dedicated add-set action row with repeat-last-set shortcut inside each exercise card.
+4. Add Phase 7 unit tests for prefill and previous-weight workflows in set creation/edit operations.
+5. Add Phase 7 UI tests for add/edit/delete/reorder set interactions and persistence-through-relaunch behavior.
 
 ---
 

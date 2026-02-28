@@ -74,6 +74,50 @@ final class HealthPlusUITests: XCTestCase {
         XCTAssertTrue(noSessions.waitForExistence(timeout: 8))
     }
 
+    func testLogFeedRowTapNavigatesToSessionDetail() throws {
+        createAndSaveSimpleSession(exerciseName: "Incline Press", reps: "8", weight: "155")
+
+        switchToTab(.log)
+        let sessionRow = app.buttons.matching(identifier: "log.feed.row").firstMatch
+        XCTAssertTrue(sessionRow.waitForExistence(timeout: 8))
+        sessionRow.tap()
+
+        let exerciseField = app.textFields["Exercise"]
+        XCTAssertTrue(exerciseField.waitForExistence(timeout: 8))
+        XCTAssertEqual(exerciseField.value as? String, "Incline Press")
+    }
+
+    func testLogFeedSwipeActionsExposeQuickActions() throws {
+        createAndSaveSimpleSession(exerciseName: "Dumbbell Row", reps: "10", weight: "85")
+
+        switchToTab(.log)
+        let sessionRow = app.buttons.matching(identifier: "log.feed.row").firstMatch
+        XCTAssertTrue(sessionRow.waitForExistence(timeout: 8))
+
+        sessionRow.swipeLeft()
+        let deleteButton = app.buttons["Delete"]
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 8))
+
+        sessionRow.swipeRight()
+        let duplicateButton = app.buttons["Duplicate"]
+        XCTAssertTrue(duplicateButton.waitForExistence(timeout: 8))
+    }
+
+    func testLogFeedEditModeToggleShowsAndHidesEditingIndicator() throws {
+        createAndSaveSimpleSession(exerciseName: "Lat Pulldown", reps: "12", weight: "140")
+
+        switchToTab(.log)
+        let editButton = app.buttons["log.feed.toolbar.edit"]
+        XCTAssertTrue(editButton.waitForExistence(timeout: 8))
+
+        editButton.tap()
+        let editingIndicator = findElement("log.feed.editing.indicator")
+        XCTAssertTrue(editingIndicator.waitForExistence(timeout: 8))
+
+        editButton.tap()
+        XCTAssertFalse(editingIndicator.waitForExistence(timeout: 1))
+    }
+
     func testCreateSessionAndVerifyHistoryEntry() throws {
         createAndSaveSimpleSession(exerciseName: "Bench Press", reps: "8", weight: "185")
 

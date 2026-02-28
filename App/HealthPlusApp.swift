@@ -33,6 +33,7 @@ struct HealthPlusApp: App {
     var body: some Scene {
         WindowGroup {
             RootTabView()
+                .preferredColorScheme(.dark)
                 .task {
                     guard didSeedWorkoutTypes == false else {
                         return

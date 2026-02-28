@@ -1,6 +1,34 @@
 import XCTest
 
 final class HealthPlusUITests: XCTestCase {
+    private enum ShellTab: String, CaseIterable {
+        case log
+        case history
+        case stats
+        case settings
+
+        var accessibilityIdentifier: String {
+            "shell.tab.\(rawValue)"
+        }
+
+        var fallbackTitle: String {
+            switch self {
+            case .log:
+                return "Log"
+            case .history:
+                return "History"
+            case .stats:
+                return "Stats"
+            case .settings:
+                return "Settings"
+            }
+        }
+
+        var navigationTitle: String {
+            fallbackTitle
+        }
+    }
+
     private var app: XCUIApplication!
 
     override func setUpWithError() throws {
@@ -17,8 +45,30 @@ final class HealthPlusUITests: XCTestCase {
         app.launch()
     }
 
+    func testShellRendersTabsAndSupportsAccessibility() throws {
+        let shellChrome = findElement("shell.tab.chrome")
+        XCTAssertTrue(shellChrome.waitForExistence(timeout: 8))
+
+        for tab in ShellTab.allCases {
+            let button = shellButton(for: tab)
+            XCTAssertTrue(button.waitForExistence(timeout: 8))
+            XCTAssertTrue(button.isHittable)
+            XCTAssertFalse(button.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+    }
+
+    func testShellTabSwitchingShowsExpectedRootTitles() throws {
+        let cycle: [ShellTab] = [.history, .stats, .settings, .log]
+
+        for tab in cycle {
+            switchToTab(tab)
+            let navTitle = app.navigationBars[tab.navigationTitle].firstMatch
+            XCTAssertTrue(navTitle.waitForExistence(timeout: 8))
+        }
+    }
+
     func testStatsShowsNoSessionsStateOnFreshLaunch() throws {
-        app.tabBars.buttons["Stats"].tap()
+        switchToTab(.stats)
 
         let noSessions = findElement("stats.placeholder.noSessions")
         XCTAssertTrue(noSessions.waitForExistence(timeout: 8))
@@ -27,7 +77,7 @@ final class HealthPlusUITests: XCTestCase {
     func testCreateSessionAndVerifyHistoryEntry() throws {
         createAndSaveSimpleSession(exerciseName: "Bench Press", reps: "8", weight: "185")
 
-        app.tabBars.buttons["History"].tap()
+        switchToTab(.history)
 
         let sessionLink = app.buttons.matching(identifier: "history.session.link").firstMatch
         XCTAssertTrue(sessionLink.waitForExistence(timeout: 8))
@@ -48,7 +98,7 @@ final class HealthPlusUITests: XCTestCase {
     func testEditSetInHistoryPersists() throws {
         createAndSaveSimpleSession(exerciseName: "Overhead Press", reps: "6", weight: "115")
 
-        app.tabBars.buttons["History"].tap()
+        switchToTab(.history)
         let sessionLink = app.buttons.matching(identifier: "history.session.link").firstMatch
         XCTAssertTrue(sessionLink.waitForExistence(timeout: 8))
         sessionLink.tap()
@@ -72,7 +122,7 @@ final class HealthPlusUITests: XCTestCase {
 
     func testOpenStatsApplyDateFiltersAndKeepChartsVisible() throws {
         createAndSaveSimpleSession(exerciseName: "Barbell Row", reps: "8", weight: "155")
-        app.tabBars.buttons["Stats"].tap()
+        switchToTab(.stats)
 
         let topSetChart = findElement("stats.chart.topSet")
         let weeklyVolumeChart = findElement("stats.chart.weeklyVolume")
@@ -95,7 +145,7 @@ final class HealthPlusUITests: XCTestCase {
         reps: String,
         weight: String
     ) {
-        app.tabBars.buttons["Log"].tap()
+        switchToTab(.log)
 
         let startButton = app.buttons["log.start.button"]
         XCTAssertTrue(startButton.waitForExistence(timeout: 8))
@@ -133,6 +183,21 @@ final class HealthPlusUITests: XCTestCase {
         saveSessionButton.tap()
 
         XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+    }
+
+    private func switchToTab(_ tab: ShellTab) {
+        let button = shellButton(for: tab)
+        XCTAssertTrue(button.waitForExistence(timeout: 8))
+        button.tap()
+    }
+
+    private func shellButton(for tab: ShellTab) -> XCUIElement {
+        let custom = app.buttons[tab.accessibilityIdentifier]
+        if custom.exists || custom.waitForExistence(timeout: 1) {
+            return custom
+        }
+
+        return app.tabBars.buttons[tab.fallbackTitle]
     }
 
     private func findElement(_ identifier: String) -> XCUIElement {

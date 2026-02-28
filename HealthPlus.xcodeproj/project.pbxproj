@@ -26,6 +26,10 @@
 		B30000000000000000000011 /* WorkoutTypeSeederTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000013 /* WorkoutTypeSeederTests.swift */; };
 		B30000000000000000000012 /* HealthPlusUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000015 /* HealthPlusUITests.swift */; };
 		B30000000000000000000013 /* HealthPlusUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000016 /* HealthPlusUITestsLaunchTests.swift */; };
+		B30000000000000000000014 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000017 /* GlassCard.swift */; };
+		B30000000000000000000015 /* GlassPillButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000018 /* GlassPillButton.swift */; };
+		B30000000000000000000016 /* GlassTabChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000019 /* GlassTabChrome.swift */; };
+		B30000000000000000000017 /* AppThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2000000000000000000001A /* AppThemeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +72,10 @@
 		F20000000000000000000014 /* HealthPlusUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HealthPlusUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20000000000000000000015 /* HealthPlusUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPlusUITests.swift; sourceTree = "<group>"; };
 		F20000000000000000000016 /* HealthPlusUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthPlusUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		F20000000000000000000017 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
+		F20000000000000000000018 /* GlassPillButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassPillButton.swift; sourceTree = "<group>"; };
+		F20000000000000000000019 /* GlassTabChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassTabChrome.swift; sourceTree = "<group>"; };
+		F2000000000000000000001A /* AppThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppThemeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,8 +221,19 @@
 			isa = PBXGroup;
 			children = (
 				F2000000000000000000000E /* PlaceholderCard.swift */,
+				A00000000000000000000040 /* Glass */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000040 /* Glass */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000017 /* GlassCard.swift */,
+				F20000000000000000000018 /* GlassPillButton.swift */,
+				F20000000000000000000019 /* GlassTabChrome.swift */,
+			);
+			path = Glass;
 			sourceTree = "<group>";
 		};
 		A0000000000000000000000F /* Theme */ = {
@@ -230,6 +249,7 @@
 			isa = PBXGroup;
 			children = (
 				F20000000000000000000013 /* WorkoutTypeSeederTests.swift */,
+				F2000000000000000000001A /* AppThemeTests.swift */,
 			);
 			path = HealthPlusTests;
 			sourceTree = "<group>";
@@ -387,6 +407,9 @@
 				B3000000000000000000000E /* PlaceholderCard.swift in Sources */,
 				B3000000000000000000000F /* AppTheme.swift in Sources */,
 				B30000000000000000000010 /* Color+Hex.swift in Sources */,
+				B30000000000000000000014 /* GlassCard.swift in Sources */,
+				B30000000000000000000015 /* GlassPillButton.swift in Sources */,
+				B30000000000000000000016 /* GlassTabChrome.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,6 +418,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B30000000000000000000011 /* WorkoutTypeSeederTests.swift in Sources */,
+				B30000000000000000000017 /* AppThemeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

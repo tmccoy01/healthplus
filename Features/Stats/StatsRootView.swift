@@ -146,6 +146,7 @@ struct StatsRootView: View {
             .background(backgroundGradient.ignoresSafeArea())
             .navigationTitle("Stats")
             .navigationBarTitleDisplayMode(.inline)
+            .appNavigationChrome()
         }
         .task(id: dashboardTaskID) {
             await rebuildDashboard()
@@ -187,64 +188,64 @@ struct StatsRootView: View {
     }
 
     private var filtersCard: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Filters")
-                .font(AppTheme.Typography.sectionTitle)
-                .foregroundStyle(AppTheme.Colors.textPrimary)
+        GlassCard(style: .surface, padding: AppTheme.Spacing.large, cornerRadius: AppTheme.Radius.large) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                Text("Filters")
+                    .font(AppTheme.Typography.sectionTitle)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                Text("Exercise")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                    Text("Exercise")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
 
-                Picker("Exercise", selection: Binding(
-                    get: { selectedExerciseID ?? "" },
-                    set: { selectedExerciseID = $0.isEmpty ? nil : $0 }
-                )) {
-                    if exerciseOptions.isEmpty {
-                        Text("No exercises").tag("")
-                    } else {
-                        ForEach(exerciseOptions) { option in
-                            Text(option.label).tag(option.id)
+                    Picker("Exercise", selection: Binding(
+                        get: { selectedExerciseID ?? "" },
+                        set: { selectedExerciseID = $0.isEmpty ? nil : $0 }
+                    )) {
+                        if exerciseOptions.isEmpty {
+                            Text("No exercises").tag("")
+                        } else {
+                            ForEach(exerciseOptions) { option in
+                                Text(option.label).tag(option.id)
+                            }
                         }
                     }
+                    .pickerStyle(.menu)
+                    .tint(AppTheme.Colors.textPrimary)
+                    .accessibilityIdentifier("stats.exercise.picker")
                 }
-                .pickerStyle(.menu)
-                .tint(AppTheme.Colors.textPrimary)
-                .accessibilityIdentifier("stats.exercise.picker")
-            }
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-                Text("Date Range")
-                    .font(AppTheme.Typography.caption)
-                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                    Text("Date Range")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textSecondary)
 
-                Picker("Date Range", selection: $selectedDateRange) {
-                    ForEach(DateRangePreset.allCases) { preset in
-                        Text(preset.label).tag(preset)
+                    Picker("Date Range", selection: $selectedDateRange) {
+                        ForEach(DateRangePreset.allCases) { preset in
+                            Text(preset.label).tag(preset)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("stats.range.picker")
                 }
-                .pickerStyle(.segmented)
-                .accessibilityIdentifier("stats.range.picker")
             }
         }
-        .padding(AppTheme.Spacing.large)
-        .background(cardBackground)
         .accessibilityIdentifier("stats.filters.card")
     }
 
     private var loadingCard: some View {
-        VStack(spacing: AppTheme.Spacing.small) {
-            ProgressView()
-                .tint(AppTheme.Colors.accent)
+        GlassCard(style: .surface, padding: AppTheme.Spacing.xLarge, cornerRadius: AppTheme.Radius.large) {
+            VStack(spacing: AppTheme.Spacing.small) {
+                ProgressView()
+                    .tint(AppTheme.Colors.accent)
 
-            Text("Loading chart data...")
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(AppTheme.Colors.textSecondary)
+                Text("Loading chart data...")
+                    .font(AppTheme.Typography.caption)
+                    .foregroundStyle(AppTheme.Colors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
-        .padding(AppTheme.Spacing.xLarge)
-        .background(cardBackground)
         .accessibilityIdentifier("stats.loading")
     }
 
@@ -316,130 +317,129 @@ struct StatsRootView: View {
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-        .padding(AppTheme.Spacing.medium)
-        .background(cardBackground)
+        .modifier(StatsCardStyleModifier())
     }
 
     private func topSetChart(snapshot: ExerciseStatsEngine.DashboardSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Top Set Weight")
-                .font(AppTheme.Typography.sectionTitle)
-                .foregroundStyle(AppTheme.Colors.textPrimary)
+        GlassCard(style: .surface, padding: AppTheme.Spacing.large, cornerRadius: AppTheme.Radius.large) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                Text("Top Set Weight")
+                    .font(AppTheme.Typography.sectionTitle)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
 
-            Chart(snapshot.performancePoints) { point in
-                AreaMark(
-                    x: .value("Date", point.date),
-                    y: .value("Weight", point.topSetWeight)
-                )
-                .interpolationMethod(.catmullRom)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [AppTheme.Colors.accent.opacity(0.25), .clear],
-                        startPoint: .top,
-                        endPoint: .bottom
+                Chart(snapshot.performancePoints) { point in
+                    AreaMark(
+                        x: .value("Date", point.date),
+                        y: .value("Weight", point.topSetWeight)
                     )
-                )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [AppTheme.Colors.accent.opacity(0.25), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
 
-                LineMark(
-                    x: .value("Date", point.date),
-                    y: .value("Weight", point.topSetWeight)
-                )
-                .interpolationMethod(.catmullRom)
-                .lineStyle(.init(lineWidth: 3))
-                .foregroundStyle(AppTheme.Colors.accent)
+                    LineMark(
+                        x: .value("Date", point.date),
+                        y: .value("Weight", point.topSetWeight)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .lineStyle(.init(lineWidth: 3))
+                    .foregroundStyle(AppTheme.Colors.accent)
 
-                PointMark(
-                    x: .value("Date", point.date),
-                    y: .value("Weight", point.topSetWeight)
-                )
-                .symbolSize(42)
-                .foregroundStyle(AppTheme.Colors.accent)
-            }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 4)) { value in
-                    AxisGridLine()
-                        .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.45))
-                    AxisTick()
-                        .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date, format: .dateTime.month().day())
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                    PointMark(
+                        x: .value("Date", point.date),
+                        y: .value("Weight", point.topSetWeight)
+                    )
+                    .symbolSize(42)
+                    .foregroundStyle(AppTheme.Colors.accent)
+                }
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine()
+                            .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.45))
+                        AxisTick()
+                            .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date, format: .dateTime.month().day())
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                            }
                         }
                     }
                 }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine()
-                        .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.45))
-                    AxisTick()
-                        .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
-                    AxisValueLabel {
-                        if let weight = value.as(Double.self) {
-                            Text(formattedCompact(weight))
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisGridLine()
+                            .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.45))
+                        AxisTick()
+                            .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
+                        AxisValueLabel {
+                            if let weight = value.as(Double.self) {
+                                Text(formattedCompact(weight))
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                            }
                         }
                     }
                 }
+                .frame(height: 220)
             }
-            .frame(height: 220)
         }
-        .padding(AppTheme.Spacing.large)
-        .background(cardBackground)
         .accessibilityIdentifier("stats.chart.topSet")
     }
 
     private func weeklyVolumeChart(snapshot: ExerciseStatsEngine.DashboardSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            Text("Weekly Volume")
-                .font(AppTheme.Typography.sectionTitle)
-                .foregroundStyle(AppTheme.Colors.textPrimary)
+        GlassCard(style: .surface, padding: AppTheme.Spacing.large, cornerRadius: AppTheme.Radius.large) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                Text("Weekly Volume")
+                    .font(AppTheme.Typography.sectionTitle)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
 
-            Chart(snapshot.weeklyVolumePoints) { point in
-                BarMark(
-                    x: .value("Week", point.weekStart),
-                    y: .value("Volume", point.volume)
-                )
-                .cornerRadius(6)
-                .foregroundStyle(AppTheme.Colors.surfaceMuted.gradient)
-            }
-            .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: 4)) { value in
-                    AxisGridLine()
-                        .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.35))
-                    AxisTick()
-                        .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date, format: .dateTime.month().day())
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                Chart(snapshot.weeklyVolumePoints) { point in
+                    BarMark(
+                        x: .value("Week", point.weekStart),
+                        y: .value("Volume", point.volume)
+                    )
+                    .cornerRadius(6)
+                    .foregroundStyle(AppTheme.Colors.surfaceMuted.gradient)
+                }
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 4)) { value in
+                        AxisGridLine()
+                            .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.35))
+                        AxisTick()
+                            .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date, format: .dateTime.month().day())
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                            }
                         }
                     }
                 }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine()
-                        .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.35))
-                    AxisTick()
-                        .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
-                    AxisValueLabel {
-                        if let volume = value.as(Double.self) {
-                            Text(formattedCompact(volume))
-                                .font(AppTheme.Typography.caption)
-                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisGridLine()
+                            .foregroundStyle(AppTheme.Colors.surfaceMuted.opacity(0.35))
+                        AxisTick()
+                            .foregroundStyle(AppTheme.Colors.textSecondary.opacity(0.6))
+                        AxisValueLabel {
+                            if let volume = value.as(Double.self) {
+                                Text(formattedCompact(volume))
+                                    .font(AppTheme.Typography.caption)
+                                    .foregroundStyle(AppTheme.Colors.textSecondary)
+                            }
                         }
                     }
                 }
+                .frame(height: 220)
             }
-            .frame(height: 220)
         }
-        .padding(AppTheme.Spacing.large)
-        .background(cardBackground)
         .accessibilityIdentifier("stats.chart.weeklyVolume")
     }
 
@@ -481,6 +481,18 @@ struct StatsRootView: View {
 
     private var selectedExerciseLabel: String {
         exerciseOptions.first(where: { $0.id == selectedExerciseID })?.label ?? "Exercise"
+    }
+
+    private struct StatsCardStyleModifier: ViewModifier {
+        func body(content: Content) -> some View {
+            GlassCard(
+                style: .surface,
+                padding: AppTheme.Spacing.medium,
+                cornerRadius: AppTheme.Radius.medium
+            ) {
+                content
+            }
+        }
     }
 
     private func trendTitle(_ trend: ExerciseStatsEngine.TrendDirection) -> String {
@@ -531,25 +543,8 @@ struct StatsRootView: View {
         }
     }
 
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: AppTheme.Radius.large, style: .continuous)
-            .fill(AppTheme.Colors.surface.opacity(0.74))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.Radius.large, style: .continuous)
-                    .stroke(AppTheme.Colors.surfaceMuted.opacity(0.7), lineWidth: 1)
-            )
-    }
-
     private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                AppTheme.Colors.background,
-                AppTheme.Colors.surface,
-                AppTheme.Colors.surfaceMuted
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        AppTheme.Gradients.appBackground
     }
 
     private func formattedDate(_ date: Date?) -> String {

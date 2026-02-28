@@ -82,6 +82,7 @@ struct WorkoutTypesSettingsView: View {
             .background(AppTheme.Colors.background)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .appNavigationChrome()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -195,6 +196,7 @@ struct WorkoutTypesSettingsView: View {
             }
             .navigationTitle(editorTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .appNavigationChrome()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

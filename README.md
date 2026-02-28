@@ -104,7 +104,7 @@ Core entities:
 
 ## Current Status
 
-Phase 0 through Phase 4 are complete in source:
+Phase 0 through Phase 5 are complete in source:
 - SwiftUI app shell with 4 tabs (`Log`, `History`, `Stats`, `Settings`)
 - SwiftData model layer (`WorkoutType`, `ExerciseTemplate`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`, `BodyMetric`)
 - Idempotent default workout-type seed service
@@ -137,14 +137,21 @@ Phase 0 through Phase 4 are complete in source:
   - launch-time data integrity repair pass (`Phase4DataIntegrityService`)
   - session finish-date clamping and non-finite set-weight sanitization
   - consistent empty-state cards + accessibility identifiers in `Log`, `History`, and `Stats`
+- Phase 5 visual foundation refresh:
+  - semantic LiquidGlass token system in `AppTheme` with token mapping utilities
+  - shared glass primitives (`GlassCard`, `GlassPillButton`, `GlassTabChrome`)
+  - refreshed shell with custom glass tab chrome + consistent navigation material across root screens
+  - shell accessibility identifiers for all tab controls (`shell.tab.*`)
 - UI tests added (`HealthPlusUITests`):
+  - shell render and tab-switch coverage with root-title assertions
+  - shell accessibility checks for tab controls
   - create session -> log set -> save -> verify history entry
   - edit set from history and verify persisted values
   - stats empty-state visibility on clean launch
   - stats filter transition flow (`All`/`4W`) with chart-state assertions
 - Test status:
   - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
-  - Result: passed (27 tests, 0 failures)
+  - Result: passed (30 tests, 0 failures)
   - `xcodebuild -project HealthPlus.xcodeproj -target HealthPlusUITests -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build`
   - Result: passed (UITest target builds with latest tests)
 

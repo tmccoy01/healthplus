@@ -171,6 +171,7 @@ struct HistoryRootView: View {
             .background(backgroundGradient.ignoresSafeArea())
             .navigationTitle("History")
             .navigationBarTitleDisplayMode(.inline)
+            .appNavigationChrome()
         }
     }
 
@@ -219,30 +220,11 @@ struct HistoryRootView: View {
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(AppTheme.Typography.caption)
-                .foregroundStyle(isSelected ? AppTheme.Colors.textPrimary : AppTheme.Colors.textSecondary)
-                .padding(.horizontal, AppTheme.Spacing.medium)
-                .padding(.vertical, AppTheme.Spacing.xSmall)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? AppTheme.Colors.accent.opacity(0.8) : AppTheme.Colors.surfaceMuted.opacity(0.8))
-                )
-        }
-        .buttonStyle(.plain)
+        GlassPillButton(title: title, isSelected: isSelected, action: action)
     }
 
     private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                AppTheme.Colors.background,
-                AppTheme.Colors.surface,
-                AppTheme.Colors.surfaceMuted
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        AppTheme.Gradients.appBackground
     }
 
     private func formattedVolume(_ value: Double) -> String {
@@ -269,5 +251,6 @@ private struct HistorySessionDetailView: View {
         )
         .navigationTitle(session.workoutType?.name ?? "Session")
         .navigationBarTitleDisplayMode(.inline)
+        .appNavigationChrome()
     }
 }

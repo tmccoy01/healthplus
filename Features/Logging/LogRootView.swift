@@ -62,6 +62,7 @@ struct LogRootView: View {
             .background(backgroundGradient.ignoresSafeArea())
             .navigationTitle("Log")
             .navigationBarTitleDisplayMode(.inline)
+            .appNavigationChrome()
             .alert(
                 "Action Failed",
                 isPresented: Binding(
@@ -138,15 +139,7 @@ struct LogRootView: View {
     }
 
     private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                AppTheme.Colors.background,
-                AppTheme.Colors.surface,
-                AppTheme.Colors.surfaceMuted
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        AppTheme.Gradients.appBackground
     }
 
     private func startSession() {

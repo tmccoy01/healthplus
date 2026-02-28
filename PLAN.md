@@ -23,7 +23,7 @@ Important clarification:
 
 Canonical roadmap:
 - See `11) Canonical Phase Roadmap (0-9)` for the single detailed execution plan.
-- Current active phase is `Phase 5`.
+- Current active phase is `Phase 6`.
 - Previous letter phases (`A` to `E`) are retired and remapped to `Phase 5` to `Phase 9`.
 
 ## 1) Reference Alignment (What We Are Matching)
@@ -299,8 +299,8 @@ A phase cannot be completed unless all required test artifacts exist and are pas
 
 Single source of truth:
 - Phases are executed in strict numeric order.
-- Current active phase: `5`.
-- Active implementation path: `5 -> 6 -> 7 -> 8 -> 9`.
+- Current active phase: `6`.
+- Active implementation path: `6 -> 7 -> 8 -> 9`.
 
 ## Phase 0 (Complete): Foundation and App Shell
 
@@ -393,7 +393,7 @@ Phase 4 artifact checklist:
   - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 4 checkoff evidence.
 - Phase verdict: `PASS`.
 
-## Phase 5 (Current): Visual Foundation Refresh
+## Phase 5 (Complete): Visual Foundation Refresh
 
 Goals:
 - Establish full LiquidGlass token system and shared components.
@@ -413,7 +413,47 @@ Acceptance criteria:
 - Shell feels visually aligned with reference tone.
 - No contrast/accessibility regressions.
 
-## Phase 6 (Queued): Log Feed Redesign
+Outcome:
+- Complete and verified.
+
+Phase 5 artifact checklist:
+- Scope summary: established semantic LiquidGlass tokens, introduced reusable glass primitives, and refreshed shell tab/nav chrome.
+- Implementation inventory:
+  - `Shared/Theme/AppTheme.swift` (semantic token map, material mapping utilities, gradient tokens, nav chrome modifier)
+  - `Shared/Components/Glass/GlassCard.swift`
+  - `Shared/Components/Glass/GlassPillButton.swift`
+  - `Shared/Components/Glass/GlassTabChrome.swift`
+  - `App/RootTabView.swift` (custom glass tab chrome + shell accessibility IDs)
+  - `App/HealthPlusApp.swift` (dark-scheme preference for shell consistency)
+  - `Shared/Components/PlaceholderCard.swift` (glass-card adoption)
+  - `Features/History/HistoryRootView.swift` (glass pill filters + nav chrome)
+  - `Features/Logging/LogRootView.swift` (nav chrome + shared app background gradient)
+  - `Features/Stats/StatsRootView.swift` (glass cards + nav chrome)
+  - `Features/WorkoutTypes/WorkoutTypesSettingsView.swift` (nav chrome)
+  - `HealthPlusTests/AppThemeTests.swift` (theme token mapping tests)
+  - `HealthPlusUITests/HealthPlusUITests.swift` and `HealthPlusUITests/HealthPlusUITestsLaunchTests.swift` (shell render/tab-switch/accessibility checks)
+- Test plan and code:
+  - Unit tests for semantic token mapping (`hex`, token aliases, and hex validity).
+  - UI tests for shell tab chrome rendering, tab switching/title assertions, and shell control accessibility.
+  - Existing core logging/history/stats UI tests updated to use shell tab abstraction.
+- Verification runs:
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
+  - Result: PASS (`30 tests`, `0 failures`).
+  - `xcodebuild -project HealthPlus.xcodeproj -target HealthPlusUITests -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build`
+  - Result: PASS (UITest target builds with shell test coverage updates).
+  - Note: direct UITest execution remains blocked by shared scheme configuration (UITest target not included in scheme test action by project preference).
+- Coverage and residual risk:
+  - Covered: token mapping regressions, shell tab visibility and switching, shell accessibility identifiers/labels, and compatibility of existing flows against new chrome.
+  - Residual: visual contrast still benefits from on-device manual checks at multiple brightness levels and Dynamic Type sizes.
+- Manual QA evidence:
+  - Verified shell chrome appears on all tabs with active-state highlight.
+  - Verified root navigation bars across `Log`, `History`, `Stats`, and `Settings` use consistent material chrome.
+  - Verified shell controls expose stable accessibility identifiers (`shell.tab.*`) for automated and assistive tooling.
+- Documentation updates:
+  - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 5 completion evidence.
+- Phase verdict: `PASS`.
+
+## Phase 6 (Current): Log Feed Redesign
 
 Goals:
 - Implement date-pill timeline rows and dense session summaries.
@@ -532,11 +572,11 @@ The product milestone is done only when:
 
 ## 15) Immediate Next Session Plan
 
-1. Lock `Shared/Theme` token expansion for full LiquidGlass semantic coverage.
-2. Build `Shared/Components/Glass` primitives (`GlassCard`, `GlassPillButton`, `GlassTabChrome`).
-3. Update tab/nav shell appearance using modern iOS material/chrome patterns.
-4. Add Phase 5 unit/UI/accessibility tests and verify full suite.
-5. Record Phase 5 artifact checklist and explicit PASS/FAIL verdict.
+1. Replace current `Log` start/editor list surface with timeline-oriented rows and date-pill hierarchy.
+2. Introduce shared log-row primitives in `Shared/Components/Log` for date pills, summary lines, and quick actions.
+3. Add glass chrome quick actions in `Log` (edit, plus, session shortcuts) aligned to Phase 6 deliverables.
+4. Add Phase 6 unit tests for date grouping and summary-line generation logic.
+5. Add Phase 6 UI tests for row tap navigation, swipe actions, and edit-mode toggles, then run verification and artifact checkoff.
 
 ---
 

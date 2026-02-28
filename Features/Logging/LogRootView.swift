@@ -106,6 +106,7 @@ struct LogRootView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .accessibilityIdentifier("log.start.workoutTypePicker")
 
                     TextField(
                         "Session notes (optional)",
@@ -113,6 +114,7 @@ struct LogRootView: View {
                         axis: .vertical
                     )
                     .lineLimit(2...4)
+                    .accessibilityIdentifier("log.start.sessionNotesField")
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
 
@@ -125,6 +127,7 @@ struct LogRootView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(AppTheme.Colors.accent)
+                    .accessibilityIdentifier("log.start.button")
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
             }
@@ -253,6 +256,7 @@ struct SessionEditorView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(AppTheme.Colors.accent)
+                    .accessibilityIdentifier("log.session.save.button")
                 }
             }
             .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
@@ -305,6 +309,7 @@ struct SessionEditorView: View {
                                 Label("Add Set", systemImage: "plus")
                             }
                             .buttonStyle(.bordered)
+                            .accessibilityIdentifier("log.set.add.button")
 
                             Button {
                                 repeatLastSet(for: entry)
@@ -313,6 +318,7 @@ struct SessionEditorView: View {
                             }
                             .buttonStyle(.bordered)
                             .disabled(entry.sets.isEmpty)
+                            .accessibilityIdentifier("log.set.repeat.button")
                         }
                     } header: {
                         HStack {
@@ -339,6 +345,7 @@ struct SessionEditorView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(AppTheme.Colors.accent)
+                .accessibilityIdentifier("log.exercise.add.button")
             }
             .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
 
@@ -363,9 +370,11 @@ struct SessionEditorView: View {
                         TextField("Exercise name", text: $draftExerciseName)
                             .textInputAutocapitalization(.words)
                             .disableAutocorrection(true)
+                            .accessibilityIdentifier("log.exercise.name.field")
 
                         TextField("Notes (optional)", text: $draftExerciseNotes, axis: .vertical)
                             .lineLimit(1...3)
+                            .accessibilityIdentifier("log.exercise.notes.field")
                     }
                 }
                 .navigationTitle("Add Exercise")
@@ -382,6 +391,7 @@ struct SessionEditorView: View {
                             addExercise()
                         }
                         .disabled(canSaveExercise == false)
+                        .accessibilityIdentifier("log.exercise.save.button")
                     }
                 }
             }
@@ -440,6 +450,7 @@ struct SessionEditorView: View {
                     .disableAutocorrection(true)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 72)
+                    .accessibilityIdentifier("log.set.reps.field")
 
                 TextField("Weight", text: weightBinding(for: set))
                     .keyboardType(.decimalPad)
@@ -447,10 +458,12 @@ struct SessionEditorView: View {
                     .disableAutocorrection(true)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 96)
+                    .accessibilityIdentifier("log.set.weight.field")
 
                 Toggle("Warmup", isOn: warmupBinding(for: set))
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .accessibilityIdentifier("log.set.warmup.toggle")
             }
 
             TextField("Set notes", text: setNotesBinding(for: set), axis: .vertical)

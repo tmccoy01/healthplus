@@ -1,0 +1,127 @@
+import XCTest
+
+final class HealthPlusUITests: XCTestCase {
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+
+        app = XCUIApplication()
+        app.launchArguments += [
+            "-ui-testing-in-memory",
+            "-AppleLanguages",
+            "(en)",
+            "-AppleLocale",
+            "en_US"
+        ]
+        app.launch()
+    }
+
+    func testCreateSessionAndVerifyHistoryEntry() throws {
+        createAndSaveSimpleSession(exerciseName: "Bench Press", reps: "8", weight: "185")
+
+        app.tabBars.buttons["History"].tap()
+
+        let sessionLink = app.buttons.matching(identifier: "history.session.link").firstMatch
+        XCTAssertTrue(sessionLink.waitForExistence(timeout: 8))
+        sessionLink.tap()
+
+        let exerciseField = app.textFields["Exercise"]
+        XCTAssertTrue(exerciseField.waitForExistence(timeout: 8))
+        XCTAssertTrue(exerciseField.value as? String == "Bench Press")
+
+        let repsField = app.textFields.matching(identifier: "log.set.reps.field").firstMatch
+        let weightField = app.textFields.matching(identifier: "log.set.weight.field").firstMatch
+        XCTAssertTrue(repsField.exists)
+        XCTAssertTrue(weightField.exists)
+        XCTAssertTrue(repsField.value as? String == "8")
+        XCTAssertTrue(weightField.value as? String == "185")
+    }
+
+    func testEditSetInHistoryPersists() throws {
+        createAndSaveSimpleSession(exerciseName: "Overhead Press", reps: "6", weight: "115")
+
+        app.tabBars.buttons["History"].tap()
+        let sessionLink = app.buttons.matching(identifier: "history.session.link").firstMatch
+        XCTAssertTrue(sessionLink.waitForExistence(timeout: 8))
+        sessionLink.tap()
+
+        let repsField = app.textFields.matching(identifier: "log.set.reps.field").firstMatch
+        let weightField = app.textFields.matching(identifier: "log.set.weight.field").firstMatch
+        XCTAssertTrue(repsField.waitForExistence(timeout: 8))
+        XCTAssertTrue(weightField.waitForExistence(timeout: 8))
+
+        repsField.replaceText(with: "10")
+        weightField.replaceText(with: "135")
+
+        app.navigationBars.buttons["History"].firstMatch.tap()
+        sessionLink.tap()
+
+        XCTAssertTrue(repsField.waitForExistence(timeout: 8))
+        XCTAssertTrue(weightField.waitForExistence(timeout: 8))
+        XCTAssertTrue(repsField.value as? String == "10")
+        XCTAssertTrue(weightField.value as? String == "135")
+    }
+
+    private func createAndSaveSimpleSession(
+        exerciseName: String,
+        reps: String,
+        weight: String
+    ) {
+        app.tabBars.buttons["Log"].tap()
+
+        let startButton = app.buttons["log.start.button"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+        startButton.tap()
+
+        let addExerciseButton = app.buttons["log.exercise.add.button"]
+        XCTAssertTrue(addExerciseButton.waitForExistence(timeout: 8))
+        addExerciseButton.tap()
+
+        let exerciseNameField = app.textFields["log.exercise.name.field"]
+        XCTAssertTrue(exerciseNameField.waitForExistence(timeout: 8))
+        exerciseNameField.tap()
+        exerciseNameField.typeText(exerciseName)
+
+        let saveExerciseButton = app.buttons["log.exercise.save.button"]
+        XCTAssertTrue(saveExerciseButton.waitForExistence(timeout: 8))
+        saveExerciseButton.tap()
+
+        let addSetButton = app.buttons.matching(identifier: "log.set.add.button").firstMatch
+        XCTAssertTrue(addSetButton.waitForExistence(timeout: 8))
+        addSetButton.tap()
+
+        let repsField = app.textFields.matching(identifier: "log.set.reps.field").firstMatch
+        let weightField = app.textFields.matching(identifier: "log.set.weight.field").firstMatch
+        XCTAssertTrue(repsField.waitForExistence(timeout: 8))
+        XCTAssertTrue(weightField.waitForExistence(timeout: 8))
+
+        repsField.tap()
+        repsField.typeText(reps)
+        weightField.tap()
+        weightField.typeText(weight)
+
+        let saveSessionButton = app.buttons["log.session.save.button"]
+        XCTAssertTrue(saveSessionButton.waitForExistence(timeout: 8))
+        saveSessionButton.tap()
+
+        XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+    }
+}
+
+private extension XCUIElement {
+    func replaceText(with text: String) {
+        tap()
+
+        let currentValue = value as? String ?? ""
+        let placeholder = placeholderValue ?? ""
+        if currentValue.isEmpty || currentValue == placeholder {
+            typeText(text)
+            return
+        }
+
+        let deleteString = String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentValue.count)
+        typeText(deleteString)
+        typeText(text)
+    }
+}

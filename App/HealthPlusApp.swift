@@ -4,6 +4,9 @@ import SwiftUI
 @main
 struct HealthPlusApp: App {
     private let modelContainer: ModelContainer = {
+        let arguments = ProcessInfo.processInfo.arguments
+        let isUITestingInMemory = arguments.contains("-ui-testing-in-memory")
+
         let schema = Schema([
             WorkoutType.self,
             ExerciseTemplate.self,
@@ -15,7 +18,7 @@ struct HealthPlusApp: App {
 
         let configuration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false
+            isStoredInMemoryOnly: isUITestingInMemory
         )
 
         do {

@@ -125,9 +125,12 @@ Phase 0, Phase 1, and Phase 2 are complete in source:
   - `WorkoutSessionManager`
   - `PreviousWeightLookupService`
   - `SessionVolumeCalculator`
+- UI tests added (`HealthPlusUITests`):
+  - create session -> log set -> save -> verify history entry
+  - edit set from history and verify persisted values
 - Test status:
   - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
-  - Result: passed (17 tests, 0 failures)
+  - Result: passed (20 tests, 0 failures)
 
 Detailed implementation plan lives in [PLAN.md](/Users/tannermccoy/Development/health+/PLAN.md).
 

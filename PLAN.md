@@ -372,7 +372,10 @@ Acceptance criteria:
     - `WorkoutSessionManager`
     - `PreviousWeightLookupService`
     - `SessionVolumeCalculator`
-  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes (17 tests, 0 failures).
+  - UI tests added in `HealthPlusUITests` for phase-2 logging flow:
+    - create session -> log set -> save -> verify history entry
+    - edit logged set from history -> verify persisted values
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes (20 tests, 0 failures).
 
 ## Phase 3: Stats and Progress (Session 4-5)
 
@@ -421,7 +424,7 @@ MVP must-do tickets:
 - [ ] Trend badge logic (up/flat/down)
 - [x] Input validation + form UX polish
 - [ ] Unit tests for stats + lookup logic
-- [ ] UI tests for session logging flow
+- [x] UI tests for session logging flow
 
 Post-MVP strong candidates:
 - [ ] Rest timer and notifications

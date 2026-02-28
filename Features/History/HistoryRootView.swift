@@ -154,6 +154,7 @@ struct HistoryRootView: View {
                                 } label: {
                                     sessionCard(session)
                                 }
+                                .accessibilityIdentifier("history.session.link")
                             }
                         }
                         .listRowBackground(AppTheme.Colors.surface.opacity(0.72))

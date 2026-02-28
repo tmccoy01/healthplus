@@ -342,6 +342,8 @@ Acceptance criteria:
 
 ## Phase 2: Logging Flow (Session 2-4)
 
+Status: Complete (verified 2026-02-28)
+
 Goals:
 - Start and save sessions.
 - Add exercise entries and set rows.
@@ -356,6 +358,21 @@ Acceptance criteria:
 - Complete session can be created in <30 seconds for a typical workout.
 - Previous weight appears for matching exercise names.
 - Data persists after app relaunch.
+- Checkoff evidence:
+  - `Log` tab now supports full end-to-end logging:
+    - start/save sessions
+    - add/remove exercises
+    - add/remove/edit sets with auto-increment set numbering
+    - session/exercise/set notes
+    - repeat-last-set shortcut
+    - swipe-to-delete sets with undo
+  - Previous-weight hint is shown inline while editing each exercise in session logging.
+  - `History` tab now provides grouped-by-week session timeline, quick type/exercise filter chips, and editable session detail.
+  - New services implemented and covered by unit tests:
+    - `WorkoutSessionManager`
+    - `PreviousWeightLookupService`
+    - `SessionVolumeCalculator`
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test` passes (17 tests, 0 failures).
 
 ## Phase 3: Stats and Progress (Session 4-5)
 
@@ -393,16 +410,16 @@ MVP must-do tickets:
 - [x] Define SwiftData models + relationships
 - [x] App launch seeding service for default workout types
 - [x] Workout type CRUD UI
-- [ ] Start/stop workout session
-- [ ] Add/remove exercise entry inside session
-- [ ] Add/remove/edit set entries
-- [ ] Notes at exercise and session levels
-- [ ] History list and session detail
-- [ ] Previous-weight lookup service
+- [x] Start/stop workout session
+- [x] Add/remove exercise entry inside session
+- [x] Add/remove/edit set entries
+- [x] Notes at exercise and session levels
+- [x] History list and session detail
+- [x] Previous-weight lookup service
 - [ ] Stats calculation engine
 - [ ] Line + bar charts in Stats tab
 - [ ] Trend badge logic (up/flat/down)
-- [ ] Input validation + form UX polish
+- [x] Input validation + form UX polish
 - [ ] Unit tests for stats + lookup logic
 - [ ] UI tests for session logging flow
 

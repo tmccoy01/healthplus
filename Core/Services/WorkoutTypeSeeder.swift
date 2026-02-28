@@ -129,3 +129,273 @@ struct WorkoutTypeManager {
         return sanitizedName
     }
 }
+
+struct WorkoutSessionManager {
+    enum ValidationError: Error, Equatable, LocalizedError {
+        case emptyExerciseName
+        case activeSessionAlreadyExists
+
+        var errorDescription: String? {
+            switch self {
+            case .emptyExerciseName:
+                return "Exercise name cannot be empty."
+            case .activeSessionAlreadyExists:
+                return "Finish the active session before starting a new one."
+            }
+        }
+    }
+
+    @MainActor
+    static func startSession(
+        workoutType: WorkoutType?,
+        notes: String = "",
+        context: ModelContext,
+        startedAt: Date = .now
+    ) throws -> WorkoutSession {
+        let activeSessions = try context.fetch(
+            FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate { session in
+                    session.endedAt == nil
+                }
+            )
+        )
+
+        guard activeSessions.isEmpty else {
+            throw ValidationError.activeSessionAlreadyExists
+        }
+
+        let session = WorkoutSession(
+            startedAt: startedAt,
+            endedAt: nil,
+            workoutType: workoutType,
+            sessionNotes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+        context.insert(session)
+        try context.save()
+
+        return session
+    }
+
+    @MainActor
+    static func finishSession(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        endedAt: Date = .now
+    ) throws {
+        session.endedAt = endedAt
+        try saveIfNeeded(context)
+    }
+
+    @MainActor
+    static func addExercise(
+        to session: WorkoutSession,
+        name: String,
+        notes: String = "",
+        context: ModelContext
+    ) throws -> ExerciseEntry {
+        let sanitizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard sanitizedName.isEmpty == false else {
+            throw ValidationError.emptyExerciseName
+        }
+
+        let nextOrderIndex = (session.entries.map(\.orderIndex).max() ?? -1) + 1
+        let entry = ExerciseEntry(
+            session: session,
+            exerciseName: sanitizedName,
+            orderIndex: nextOrderIndex,
+            entryNotes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+        context.insert(entry)
+        if session.entries.contains(where: { $0.id == entry.id }) == false {
+            session.entries.append(entry)
+        }
+        try saveIfNeeded(context)
+
+        return entry
+    }
+
+    @MainActor
+    static func removeExercise(
+        _ entry: ExerciseEntry,
+        from session: WorkoutSession,
+        context: ModelContext
+    ) throws {
+        session.entries.removeAll { $0.id == entry.id }
+        context.delete(entry)
+        reindexExercises(in: session)
+        try saveIfNeeded(context)
+    }
+
+    @MainActor
+    static func reindexExercises(in session: WorkoutSession) {
+        let orderedEntries = session.entries.sorted { lhs, rhs in
+            if lhs.orderIndex == rhs.orderIndex {
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            return lhs.orderIndex < rhs.orderIndex
+        }
+
+        for (index, entry) in orderedEntries.enumerated() {
+            entry.orderIndex = index
+        }
+    }
+
+    @MainActor
+    static func addSet(
+        to entry: ExerciseEntry,
+        reps: Int = 0,
+        weight: Double = 0,
+        isWarmup: Bool = false,
+        notes: String = "",
+        context: ModelContext,
+        loggedAt: Date = .now
+    ) throws -> SetEntry {
+        let nextSetIndex = (entry.sets.map(\.setIndex).max() ?? 0) + 1
+        let set = SetEntry(
+            exerciseEntry: entry,
+            setIndex: nextSetIndex,
+            reps: max(0, reps),
+            weight: max(0, weight),
+            isWarmup: isWarmup,
+            setNotes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
+            loggedAt: loggedAt
+        )
+        context.insert(set)
+        if entry.sets.contains(where: { $0.id == set.id }) == false {
+            entry.sets.append(set)
+        }
+        try saveIfNeeded(context)
+
+        return set
+    }
+
+    @MainActor
+    static func repeatLastSet(for entry: ExerciseEntry, context: ModelContext) throws -> SetEntry? {
+        let orderedSets = orderedSets(for: entry)
+        guard let lastSet = orderedSets.last else {
+            return nil
+        }
+
+        return try addSet(
+            to: entry,
+            reps: lastSet.reps,
+            weight: lastSet.weight,
+            isWarmup: lastSet.isWarmup,
+            notes: lastSet.setNotes,
+            context: context
+        )
+    }
+
+    @MainActor
+    static func removeSet(
+        _ set: SetEntry,
+        from entry: ExerciseEntry,
+        context: ModelContext
+    ) throws {
+        entry.sets.removeAll { $0.id == set.id }
+        context.delete(set)
+        reindexSets(in: entry)
+        try saveIfNeeded(context)
+    }
+
+    @MainActor
+    static func reindexSets(in entry: ExerciseEntry) {
+        let ordered = orderedSets(for: entry)
+        for (index, set) in ordered.enumerated() {
+            set.setIndex = index + 1
+        }
+    }
+
+    @MainActor
+    static func orderedSets(for entry: ExerciseEntry) -> [SetEntry] {
+        entry.sets.sorted { lhs, rhs in
+            if lhs.setIndex == rhs.setIndex {
+                return lhs.loggedAt < rhs.loggedAt
+            }
+            return lhs.setIndex < rhs.setIndex
+        }
+    }
+
+    @MainActor
+    static func saveIfNeeded(_ context: ModelContext) throws {
+        if context.hasChanges {
+            try context.save()
+        }
+    }
+}
+
+struct PreviousWeightLookupService {
+    struct Reference: Equatable {
+        let weight: Double
+        let reps: Int
+        let loggedAt: Date
+        let exerciseName: String
+        let sessionID: UUID?
+    }
+
+    @MainActor
+    static func latestReference(
+        for exerciseName: String,
+        excludingSessionID: UUID? = nil,
+        context: ModelContext
+    ) throws -> Reference? {
+        let normalizedName = normalizeExerciseName(exerciseName)
+        guard normalizedName.isEmpty == false else {
+            return nil
+        }
+
+        let entries = try context.fetch(FetchDescriptor<ExerciseEntry>())
+        var bestMatch: Reference?
+
+        for entry in entries {
+            guard normalizeExerciseName(entry.exerciseName) == normalizedName else {
+                continue
+            }
+
+            let sessionID = entry.session?.id
+            if let excludingSessionID, sessionID == excludingSessionID {
+                continue
+            }
+
+            for set in entry.sets {
+                let candidate = Reference(
+                    weight: set.weight,
+                    reps: set.reps,
+                    loggedAt: set.loggedAt,
+                    exerciseName: entry.exerciseName,
+                    sessionID: sessionID
+                )
+
+                if let currentBest = bestMatch {
+                    if candidate.loggedAt > currentBest.loggedAt {
+                        bestMatch = candidate
+                    }
+                } else {
+                    bestMatch = candidate
+                }
+            }
+        }
+
+        return bestMatch
+    }
+
+    static func normalizeExerciseName(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+    }
+}
+
+struct SessionVolumeCalculator {
+    static func totalVolume(for session: WorkoutSession) -> Double {
+        session.entries.reduce(0) { subtotal, entry in
+            subtotal + entry.sets.reduce(0) { setSubtotal, set in
+                setSubtotal + (set.weight * Double(set.reps))
+            }
+        }
+    }
+
+    static func setCount(for session: WorkoutSession) -> Int {
+        session.entries.reduce(0) { $0 + $1.sets.count }
+    }
+}

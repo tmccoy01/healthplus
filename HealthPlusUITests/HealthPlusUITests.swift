@@ -34,15 +34,7 @@ final class HealthPlusUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
 
-        app = XCUIApplication()
-        app.launchArguments += [
-            "-ui-testing-in-memory",
-            "-AppleLanguages",
-            "(en)",
-            "-AppleLocale",
-            "en_US"
-        ]
-        app.launch()
+        launchApp(useInMemoryStore: true)
     }
 
     func testShellRendersTabsAndSupportsAccessibility() throws {
@@ -164,6 +156,97 @@ final class HealthPlusUITests: XCTestCase {
         XCTAssertTrue(weightField.value as? String == "135")
     }
 
+    func testSessionDetailSupportsAddEditDeleteUndoAndReorderSetRows() throws {
+        switchToTab(.log)
+        let startButton = app.buttons["log.start.button"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+        startButton.tap()
+
+        let addExerciseButton = app.buttons["log.exercise.add.button"]
+        XCTAssertTrue(addExerciseButton.waitForExistence(timeout: 8))
+        addExerciseButton.tap()
+
+        let exerciseNameField = app.textFields["log.exercise.name.field"]
+        XCTAssertTrue(exerciseNameField.waitForExistence(timeout: 8))
+        exerciseNameField.tap()
+        exerciseNameField.typeText("Phase 7 Rows")
+
+        let saveExerciseButton = app.buttons["log.exercise.save.button"]
+        XCTAssertTrue(saveExerciseButton.waitForExistence(timeout: 8))
+        saveExerciseButton.tap()
+
+        let addSetButton = app.buttons.matching(identifier: "log.set.add.button").firstMatch
+        XCTAssertTrue(addSetButton.waitForExistence(timeout: 8))
+        addSetButton.tap()
+        addSetButton.tap()
+
+        var repsFields = app.textFields.matching(identifier: "log.set.reps.field")
+        let weightFields = app.textFields.matching(identifier: "log.set.weight.field")
+        XCTAssertTrue(repsFields.element(boundBy: 0).waitForExistence(timeout: 8))
+        XCTAssertTrue(repsFields.element(boundBy: 1).waitForExistence(timeout: 8))
+        XCTAssertTrue(weightFields.element(boundBy: 0).waitForExistence(timeout: 8))
+        XCTAssertTrue(weightFields.element(boundBy: 1).waitForExistence(timeout: 8))
+
+        repsFields.element(boundBy: 0).replaceText(with: "12")
+        weightFields.element(boundBy: 0).replaceText(with: "95")
+        repsFields.element(boundBy: 1).replaceText(with: "10")
+        weightFields.element(boundBy: 1).replaceText(with: "115")
+
+        let moveDownButton = app.buttons.matching(identifier: "log.set.move.down.button").firstMatch
+        XCTAssertTrue(moveDownButton.waitForExistence(timeout: 8))
+        moveDownButton.tap()
+
+        repsFields = app.textFields.matching(identifier: "log.set.reps.field")
+        XCTAssertEqual(repsFields.element(boundBy: 0).value as? String, "10")
+
+        let firstRow = app.otherElements.matching(identifier: "log.set.row").firstMatch
+        XCTAssertTrue(firstRow.waitForExistence(timeout: 8))
+        firstRow.swipeLeft()
+
+        let deleteSetButton = app.buttons["Delete Set"]
+        XCTAssertTrue(deleteSetButton.waitForExistence(timeout: 8))
+        deleteSetButton.tap()
+
+        repsFields = app.textFields.matching(identifier: "log.set.reps.field")
+        XCTAssertEqual(repsFields.element(boundBy: 0).value as? String, "12")
+
+        let undoDeleteButton = app.buttons["Undo Deleted Set"]
+        XCTAssertTrue(undoDeleteButton.waitForExistence(timeout: 8))
+        undoDeleteButton.tap()
+
+        repsFields = app.textFields.matching(identifier: "log.set.reps.field")
+        XCTAssertEqual(repsFields.element(boundBy: 0).value as? String, "10")
+    }
+
+    func testSetEditsPersistThroughRelaunch() throws {
+        app.terminate()
+        launchApp(useInMemoryStore: false)
+        finishAnyActiveSessionIfNeeded()
+
+        let uniqueExerciseName = "Phase7 Relaunch \(UUID().uuidString.prefix(6))"
+        createAndSaveSimpleSession(exerciseName: uniqueExerciseName, reps: "9", weight: "135")
+
+        app.terminate()
+        launchApp(useInMemoryStore: false)
+        finishAnyActiveSessionIfNeeded()
+
+        switchToTab(.log)
+        let sessionRow = app.buttons.matching(identifier: "log.feed.row").firstMatch
+        XCTAssertTrue(sessionRow.waitForExistence(timeout: 8))
+        sessionRow.tap()
+
+        let exerciseField = app.textFields.matching(identifier: "log.exercise.name.inline").firstMatch
+        XCTAssertTrue(exerciseField.waitForExistence(timeout: 8))
+        XCTAssertEqual(exerciseField.value as? String, uniqueExerciseName)
+
+        let repsField = app.textFields.matching(identifier: "log.set.reps.field").firstMatch
+        let weightField = app.textFields.matching(identifier: "log.set.weight.field").firstMatch
+        XCTAssertTrue(repsField.waitForExistence(timeout: 8))
+        XCTAssertTrue(weightField.waitForExistence(timeout: 8))
+        XCTAssertEqual(repsField.value as? String, "9")
+        XCTAssertEqual(weightField.value as? String, "135")
+    }
+
     func testOpenStatsApplyDateFiltersAndKeepChartsVisible() throws {
         createAndSaveSimpleSession(exerciseName: "Barbell Row", reps: "8", weight: "155")
         switchToTab(.stats)
@@ -189,6 +272,7 @@ final class HealthPlusUITests: XCTestCase {
         reps: String,
         weight: String
     ) {
+        finishAnyActiveSessionIfNeeded()
         switchToTab(.log)
 
         let startButton = app.buttons["log.start.button"]
@@ -227,6 +311,34 @@ final class HealthPlusUITests: XCTestCase {
         saveSessionButton.tap()
 
         XCTAssertTrue(startButton.waitForExistence(timeout: 8))
+    }
+
+    private func launchApp(useInMemoryStore: Bool) {
+        app = XCUIApplication()
+        app.launchArguments = launchArguments(useInMemoryStore: useInMemoryStore)
+        app.launch()
+    }
+
+    private func launchArguments(useInMemoryStore: Bool) -> [String] {
+        var arguments = [
+            "-AppleLanguages",
+            "(en)",
+            "-AppleLocale",
+            "en_US"
+        ]
+        if useInMemoryStore {
+            arguments.insert("-ui-testing-in-memory", at: 0)
+        }
+        return arguments
+    }
+
+    private func finishAnyActiveSessionIfNeeded() {
+        switchToTab(.log)
+        let saveSessionButton = app.buttons["log.session.save.button"]
+        if saveSessionButton.exists || saveSessionButton.waitForExistence(timeout: 1) {
+            saveSessionButton.tap()
+            _ = app.buttons["log.start.button"].waitForExistence(timeout: 8)
+        }
     }
 
     private func switchToTab(_ tab: ShellTab) {

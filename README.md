@@ -104,7 +104,7 @@ Core entities:
 
 ## Current Status
 
-Phase 0 through Phase 6 are complete in source:
+Phase 0 through Phase 7 are complete in source:
 - SwiftUI app shell with 4 tabs (`Log`, `History`, `Stats`, `Settings`)
 - SwiftData model layer (`WorkoutType`, `ExerciseTemplate`, `WorkoutSession`, `ExerciseEntry`, `SetEntry`, `BodyMetric`)
 - Idempotent default workout-type seed service
@@ -147,6 +147,12 @@ Phase 0 through Phase 6 are complete in source:
   - toolbar-level `Edit`/`+` actions and quick-start shortcuts in log chrome
   - row quick actions for start-again, duplicate, and delete flows
   - grouped feed rows navigate directly into session detail editing
+- Phase 7 session detail redesign:
+  - `SessionEditorView` now renders stacked exercise cards with dense, inline set-row editing
+  - per-card set-strip timeline for fast set-intensity scanning
+  - dedicated add-set action row with prefilled add-set behavior and repeat-last-set shortcut
+  - row-level move up/down reordering controls plus delete-with-undo flow
+  - relaunch-persistence regression coverage for edited set values
 - UI tests added (`HealthPlusUITests`):
   - shell render and tab-switch coverage with root-title assertions
   - shell accessibility checks for tab controls
@@ -155,11 +161,13 @@ Phase 0 through Phase 6 are complete in source:
   - log feed edit-mode toggle coverage
   - create session -> log set -> save -> verify history entry
   - edit set from history and verify persisted values
+  - session detail add/edit/delete/undo/reorder set interaction coverage
+  - relaunch persistence coverage for edited set values
   - stats empty-state visibility on clean launch
   - stats filter transition flow (`All`/`4W`) with chart-state assertions
 - Test status:
   - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
-  - Result: passed (34 tests, 0 failures)
+  - Result: passed (37 tests, 0 failures)
   - `xcodebuild -project HealthPlus.xcodeproj -target HealthPlusUITests -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build`
   - Result: passed (UITest target builds with latest tests)
 

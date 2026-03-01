@@ -598,40 +598,46 @@ struct SessionEditorView: View {
 
     var body: some View {
         List {
-            Section(title) {
-                HStack(spacing: AppTheme.Spacing.small) {
-                    Label(
-                        session.workoutType?.name ?? "Unassigned",
-                        systemImage: session.workoutType?.symbolName ?? "dumbbell.fill"
-                    )
-                    .foregroundStyle(AppTheme.Colors.textPrimary)
+            Section {
+                GlassCard(style: .chrome, padding: AppTheme.Spacing.large, cornerRadius: AppTheme.Radius.large) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                        HStack(spacing: AppTheme.Spacing.small) {
+                            Label(
+                                session.workoutType?.name ?? "Unassigned",
+                                systemImage: session.workoutType?.symbolName ?? "dumbbell.fill"
+                            )
+                            .foregroundStyle(AppTheme.Colors.textPrimary)
 
-                    Spacer()
+                            Spacer()
 
-                    Text(session.startedAt, format: .dateTime.month().day().hour().minute())
-                        .font(AppTheme.Typography.caption)
-                        .foregroundStyle(AppTheme.Colors.textSecondary)
-                }
+                            Text(session.startedAt, format: .dateTime.month().day().hour().minute())
+                                .font(AppTheme.Typography.caption)
+                                .foregroundStyle(AppTheme.Colors.textSecondary)
+                        }
 
-                TextField("Session notes", text: sessionNotesBinding, axis: .vertical)
-                    .lineLimit(2...5)
+                        TextField("Session notes", text: sessionNotesBinding, axis: .vertical)
+                            .lineLimit(2...5)
 
-                if showFinishButton {
-                    Button {
-                        onFinish?()
-                    } label: {
-                        Label(finishButtonTitle, systemImage: "checkmark.circle.fill")
-                            .frame(maxWidth: .infinity, alignment: .center)
+                        if showFinishButton {
+                            Button {
+                                onFinish?()
+                            } label: {
+                                Label(finishButtonTitle, systemImage: "checkmark.circle.fill")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.Colors.accent)
+                            .accessibilityIdentifier("log.session.save.button")
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.Colors.accent)
-                    .accessibilityIdentifier("log.session.save.button")
                 }
+                .accessibilityIdentifier("log.session.header.card")
+                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
             }
-            .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+            .listRowBackground(Color.clear)
 
             if sortedEntries.isEmpty {
-                Section("Exercises") {
+                Section {
                     PlaceholderCard(
                         title: "No Exercises Yet",
                         message: "Add your first exercise to start logging sets."
@@ -641,70 +647,13 @@ struct SessionEditorView: View {
                 }
                 .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
             } else {
-                ForEach(sortedEntries, id: \.id) { entry in
-                    Section {
-                        TextField("Exercise", text: exerciseNameBinding(for: entry))
-                            .textInputAutocapitalization(.words)
-                            .disableAutocorrection(true)
-
-                        if let reference = previousReference(for: entry) {
-                            Label {
-                                Text(
-                                    "Previous: \(formattedWeight(reference.weight)) x \(reference.reps) (\(reference.loggedAt, format: .dateTime.month().day()))"
-                                )
-                            } icon: {
-                                Image(systemName: "clock.arrow.circlepath")
-                            }
-                            .font(AppTheme.Typography.caption)
-                            .foregroundStyle(AppTheme.Colors.textSecondary)
-                        }
-
-                        TextField("Exercise notes", text: entryNotesBinding(for: entry), axis: .vertical)
-                            .lineLimit(1...3)
-
-                        ForEach(WorkoutSessionManager.orderedSets(for: entry), id: \.id) { set in
-                            setRow(set, for: entry)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        delete(set, from: entry)
-                                    } label: {
-                                        Label("Delete Set", systemImage: "trash")
-                                    }
-                                }
-                        }
-
-                        HStack(spacing: AppTheme.Spacing.small) {
-                            Button {
-                                addSet(to: entry)
-                            } label: {
-                                Label("Add Set", systemImage: "plus")
-                            }
-                            .buttonStyle(.bordered)
-                            .accessibilityIdentifier("log.set.add.button")
-
-                            Button {
-                                repeatLastSet(for: entry)
-                            } label: {
-                                Label("Repeat Last", systemImage: "arrow.clockwise")
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(entry.sets.isEmpty)
-                            .accessibilityIdentifier("log.set.repeat.button")
-                        }
-                    } header: {
-                        HStack {
-                            Text(entry.exerciseName)
-                            Spacer()
-                            Button(role: .destructive) {
-                                pendingDeleteExercise = entry
-                            } label: {
-                                Image(systemName: "trash")
-                            }
-                            .buttonStyle(.plain)
-                        }
+                Section {
+                    ForEach(sortedEntries, id: \.id) { entry in
+                        exerciseCard(entry)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
                     }
-                    .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
                 }
+                .listRowBackground(Color.clear)
             }
 
             Section {
@@ -718,7 +667,7 @@ struct SessionEditorView: View {
                 .tint(AppTheme.Colors.accent)
                 .accessibilityIdentifier("log.exercise.add.button")
             }
-            .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+            .listRowBackground(Color.clear)
 
             if deletedSetSnapshot != nil {
                 Section {
@@ -730,10 +679,10 @@ struct SessionEditorView: View {
                     }
                     .buttonStyle(.bordered)
                 }
-                .listRowBackground(AppTheme.Colors.surface.opacity(0.72))
+                .listRowBackground(Color.clear)
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .sheet(isPresented: $isAddExerciseSheetPresented) {
             NavigationStack {
                 Form {
@@ -807,39 +756,205 @@ struct SessionEditorView: View {
     }
 
     @ViewBuilder
-    private func setRow(_ set: SetEntry, for entry: ExerciseEntry) -> some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
-            HStack(spacing: AppTheme.Spacing.small) {
-                Text("Set \(set.setIndex)")
+    private func exerciseCard(_ entry: ExerciseEntry) -> some View {
+        let orderedSets = WorkoutSessionManager.orderedSets(for: entry)
+
+        GlassCard(style: .surface, padding: AppTheme.Spacing.large, cornerRadius: AppTheme.Radius.large) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                HStack(alignment: .top, spacing: AppTheme.Spacing.small) {
+                    TextField("Exercise", text: exerciseNameBinding(for: entry))
+                        .font(AppTheme.Typography.sectionTitle)
+                        .textInputAutocapitalization(.words)
+                        .disableAutocorrection(true)
+                        .accessibilityIdentifier("log.exercise.name.inline")
+
+                    Spacer(minLength: 0)
+
+                    Button(role: .destructive) {
+                        pendingDeleteExercise = entry
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(AppTheme.Colors.trendDown)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("log.exercise.delete.button")
+                }
+
+                if let reference = previousReference(for: entry) {
+                    Label {
+                        Text(
+                            "Previous: \(formattedWeight(reference.weight)) x \(reference.reps) (\(reference.loggedAt, format: .dateTime.month().day()))"
+                        )
+                    } icon: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
                     .font(AppTheme.Typography.caption)
                     .foregroundStyle(AppTheme.Colors.textSecondary)
-                    .frame(width: 44, alignment: .leading)
+                    .accessibilityIdentifier("log.exercise.previous.reference")
+                }
 
-                TextField("Reps", text: repsBinding(for: set))
-                    .keyboardType(.numberPad)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 72)
-                    .accessibilityIdentifier("log.set.reps.field")
+                TextField("Exercise notes", text: entryNotesBinding(for: entry), axis: .vertical)
+                    .lineLimit(1...3)
+                    .accessibilityIdentifier("log.exercise.notes.inline")
 
-                TextField("Weight", text: weightBinding(for: set))
-                    .keyboardType(.decimalPad)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 96)
-                    .accessibilityIdentifier("log.set.weight.field")
+                setStrip(for: orderedSets)
+
+                VStack(spacing: AppTheme.Spacing.xSmall) {
+                    ForEach(orderedSets, id: \.id) { set in
+                        setRow(set, for: entry, orderedSets: orderedSets)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    delete(set, from: entry)
+                                } label: {
+                                    Label("Delete Set", systemImage: "trash")
+                                }
+                            }
+                    }
+                }
+
+                addSetActionRow(for: entry)
+            }
+        }
+        .accessibilityIdentifier("log.exercise.card")
+    }
+
+    @ViewBuilder
+    private func setStrip(for orderedSets: [SetEntry]) -> some View {
+        if orderedSets.isEmpty == false {
+            let maxWeight = max(orderedSets.map(\.weight).max() ?? 0, 1)
+            HStack(alignment: .bottom, spacing: 4) {
+                ForEach(orderedSets, id: \.id) { set in
+                    let ratio = min(max(set.weight / maxWeight, 0), 1)
+                    Capsule(style: .continuous)
+                        .fill(
+                            set.isWarmup
+                                ? AppTheme.Colors.textTertiary.opacity(0.45)
+                                : AppTheme.Colors.accent.opacity(0.3 + (ratio * 0.7))
+                        )
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 6 + (ratio * 16))
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(.horizontal, AppTheme.Spacing.xSmall)
+            .frame(height: 24, alignment: .bottom)
+        }
+    }
+
+    private func addSetActionRow(for entry: ExerciseEntry) -> some View {
+        HStack(spacing: AppTheme.Spacing.small) {
+            Button {
+                addSet(to: entry)
+            } label: {
+                Label("Add Set", systemImage: "plus")
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.Colors.accent)
+            .accessibilityIdentifier("log.set.add.button")
+
+            Button {
+                repeatLastSet(for: entry)
+            } label: {
+                Label("Repeat Last", systemImage: "arrow.clockwise")
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .buttonStyle(.bordered)
+            .disabled(entry.sets.isEmpty)
+            .accessibilityIdentifier("log.set.repeat.button")
+        }
+    }
+
+    @ViewBuilder
+    private func setRow(_ set: SetEntry, for entry: ExerciseEntry, orderedSets: [SetEntry]) -> some View {
+        let isFirst = orderedSets.first?.id == set.id
+        let isLast = orderedSets.last?.id == set.id
+
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.small) {
+                Text("\(set.setIndex)")
+                    .font(AppTheme.Typography.metricValue)
+                    .foregroundStyle(AppTheme.Colors.textPrimary)
+                    .frame(width: 34, height: 34, alignment: .center)
+                    .background(
+                        Circle()
+                            .fill(AppTheme.Colors.surfaceElevated.opacity(0.92))
+                            .overlay(
+                                Circle()
+                                    .stroke(AppTheme.Colors.hairline.opacity(0.62), lineWidth: 1)
+                            )
+                    )
+                    .accessibilityIdentifier("log.set.index.badge")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Wt")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                    TextField("Weight", text: weightBinding(for: set))
+                        .keyboardType(.decimalPad)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("log.set.weight.field")
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Reps")
+                        .font(AppTheme.Typography.caption)
+                        .foregroundStyle(AppTheme.Colors.textTertiary)
+                    TextField("Reps", text: repsBinding(for: set))
+                        .keyboardType(.numberPad)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("log.set.reps.field")
+                }
 
                 Toggle("Warmup", isOn: warmupBinding(for: set))
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .tint(AppTheme.Colors.accent)
                     .accessibilityIdentifier("log.set.warmup.toggle")
+
+                VStack(spacing: 2) {
+                    Button {
+                        moveSet(set, in: entry, direction: .up)
+                    } label: {
+                        Image(systemName: "chevron.up")
+                            .font(.caption.bold())
+                            .frame(width: 24, height: 16)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isFirst)
+                    .accessibilityIdentifier("log.set.move.up.button")
+
+                    Button {
+                        moveSet(set, in: entry, direction: .down)
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.caption.bold())
+                            .frame(width: 24, height: 16)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isLast)
+                    .accessibilityIdentifier("log.set.move.down.button")
+                }
             }
 
             TextField("Set notes", text: setNotesBinding(for: set), axis: .vertical)
                 .lineLimit(1...2)
+                .accessibilityIdentifier("log.set.notes.field")
         }
+        .padding(AppTheme.Spacing.small)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.Radius.medium, style: .continuous)
+                .fill(AppTheme.Colors.surfaceElevated.opacity(0.76))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.medium, style: .continuous)
+                        .stroke(AppTheme.Colors.hairline.opacity(0.52), lineWidth: 1)
+                )
+        )
+        .accessibilityIdentifier("log.set.row")
     }
 
     private var sessionNotesBinding: Binding<String> {
@@ -940,9 +1055,16 @@ struct SessionEditorView: View {
     }
 
     private func addSet(to entry: ExerciseEntry) {
-        do {
-            _ = try WorkoutSessionManager.addSet(to: entry, context: modelContext)
-        } catch {
+        var caughtError: Error?
+        withAnimation(.easeInOut(duration: 0.16)) {
+            do {
+                _ = try WorkoutSessionManager.addPrefilledSet(to: entry, context: modelContext)
+            } catch {
+                caughtError = error
+            }
+        }
+
+        if caughtError != nil {
             errorMessage = "Unable to add set."
         }
     }
@@ -966,10 +1088,41 @@ struct SessionEditorView: View {
             loggedAt: set.loggedAt
         )
 
-        do {
-            try WorkoutSessionManager.removeSet(set, from: entry, context: modelContext)
-        } catch {
+        var caughtError: Error?
+        withAnimation(.easeInOut(duration: 0.16)) {
+            do {
+                try WorkoutSessionManager.removeSet(set, from: entry, context: modelContext)
+            } catch {
+                caughtError = error
+            }
+        }
+
+        if caughtError != nil {
             errorMessage = "Unable to delete set."
+        }
+    }
+
+    private func moveSet(
+        _ set: SetEntry,
+        in entry: ExerciseEntry,
+        direction: WorkoutSessionManager.SetMoveDirection
+    ) {
+        var caughtError: Error?
+        withAnimation(.easeInOut(duration: 0.16)) {
+            do {
+                _ = try WorkoutSessionManager.moveSet(
+                    set,
+                    in: entry,
+                    direction: direction,
+                    context: modelContext
+                )
+            } catch {
+                caughtError = error
+            }
+        }
+
+        if caughtError != nil {
+            errorMessage = "Unable to reorder set."
         }
     }
 

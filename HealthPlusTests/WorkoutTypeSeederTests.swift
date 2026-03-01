@@ -328,6 +328,84 @@ final class WorkoutSessionManagerTests: XCTestCase {
         XCTAssertEqual(ordered[1].reps, 3)
     }
 
+    func testAddPrefilledSetUsesCurrentExerciseLastSet() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let session = try WorkoutSessionManager.startSession(workoutType: nil, context: context)
+        let entry = try WorkoutSessionManager.addExercise(to: session, name: "Bench Press", context: context)
+        _ = try WorkoutSessionManager.addSet(
+            to: entry,
+            reps: 8,
+            weight: 185,
+            isWarmup: true,
+            notes: "Controlled tempo",
+            context: context
+        )
+
+        let prefilled = try WorkoutSessionManager.addPrefilledSet(to: entry, context: context)
+
+        XCTAssertEqual(prefilled.setIndex, 2)
+        XCTAssertEqual(prefilled.reps, 8)
+        XCTAssertEqual(prefilled.weight, 185, accuracy: 0.001)
+        XCTAssertEqual(prefilled.isWarmup, true)
+        XCTAssertEqual(prefilled.setNotes, "Controlled tempo")
+    }
+
+    func testAddPrefilledSetUsesPreviousSessionReferenceWhenCurrentExerciseHasNoSets() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+
+        let priorSession = try WorkoutSessionManager.startSession(
+            workoutType: nil,
+            context: context,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let priorEntry = try WorkoutSessionManager.addExercise(to: priorSession, name: "Squat", context: context)
+        _ = try WorkoutSessionManager.addSet(
+            to: priorEntry,
+            reps: 5,
+            weight: 255,
+            context: context,
+            loggedAt: Date(timeIntervalSince1970: 1_700_000_050)
+        )
+        try WorkoutSessionManager.finishSession(priorSession, context: context)
+
+        let currentSession = try WorkoutSessionManager.startSession(
+            workoutType: nil,
+            context: context,
+            startedAt: Date(timeIntervalSince1970: 1_700_010_000)
+        )
+        let currentEntry = try WorkoutSessionManager.addExercise(to: currentSession, name: "  squat  ", context: context)
+
+        let prefilled = try WorkoutSessionManager.addPrefilledSet(to: currentEntry, context: context)
+
+        XCTAssertEqual(prefilled.setIndex, 1)
+        XCTAssertEqual(prefilled.reps, 5)
+        XCTAssertEqual(prefilled.weight, 255, accuracy: 0.001)
+        XCTAssertFalse(prefilled.isWarmup)
+        XCTAssertEqual(prefilled.setNotes, "")
+    }
+
+    func testMoveSetReordersAndRenumbers() throws {
+        let store = try makeInMemoryStore()
+        let context = store.context
+        let session = try WorkoutSessionManager.startSession(workoutType: nil, context: context)
+        let entry = try WorkoutSessionManager.addExercise(to: session, name: "Row", context: context)
+        let first = try WorkoutSessionManager.addSet(to: entry, reps: 12, weight: 95, context: context)
+        let second = try WorkoutSessionManager.addSet(to: entry, reps: 10, weight: 115, context: context)
+        let third = try WorkoutSessionManager.addSet(to: entry, reps: 8, weight: 135, context: context)
+
+        let moved = try WorkoutSessionManager.moveSet(second, in: entry, direction: .down, context: context)
+        let ordered = WorkoutSessionManager.orderedSets(for: entry)
+
+        XCTAssertTrue(moved)
+        XCTAssertEqual(ordered.map(\.reps), [12, 8, 10])
+        XCTAssertEqual(ordered.map(\.setIndex), [1, 2, 3])
+        XCTAssertEqual(first.setIndex, 1)
+        XCTAssertEqual(third.setIndex, 2)
+        XCTAssertEqual(second.setIndex, 3)
+    }
+
     func testFinishSessionSetsEndDate() throws {
         let store = try makeInMemoryStore()
         let context = store.context

@@ -145,6 +145,25 @@ struct WorkoutSessionManager {
         }
     }
 
+    enum SetPrefillSource: Equatable {
+        case none
+        case previousSet
+        case previousSession
+    }
+
+    struct SetPrefill: Equatable {
+        let reps: Int
+        let weight: Double
+        let isWarmup: Bool
+        let notes: String
+        let source: SetPrefillSource
+    }
+
+    enum SetMoveDirection {
+        case up
+        case down
+    }
+
     @MainActor
     static func startSession(
         workoutType: WorkoutType?,
@@ -271,6 +290,54 @@ struct WorkoutSessionManager {
     }
 
     @MainActor
+    static func setPrefill(
+        for entry: ExerciseEntry,
+        context: ModelContext
+    ) throws -> SetPrefill {
+        if let lastSet = orderedSets(for: entry).last {
+            return SetPrefill(
+                reps: lastSet.reps,
+                weight: lastSet.weight,
+                isWarmup: lastSet.isWarmup,
+                notes: lastSet.setNotes,
+                source: .previousSet
+            )
+        }
+
+        if let reference = try PreviousWeightLookupService.latestReference(
+            for: entry.exerciseName,
+            excludingSessionID: entry.session?.id,
+            context: context
+        ) {
+            return SetPrefill(
+                reps: max(0, reference.reps),
+                weight: sanitizeWeight(reference.weight),
+                isWarmup: false,
+                notes: "",
+                source: .previousSession
+            )
+        }
+
+        return SetPrefill(reps: 0, weight: 0, isWarmup: false, notes: "", source: .none)
+    }
+
+    @MainActor
+    static func addPrefilledSet(
+        to entry: ExerciseEntry,
+        context: ModelContext
+    ) throws -> SetEntry {
+        let prefill = try setPrefill(for: entry, context: context)
+        return try addSet(
+            to: entry,
+            reps: prefill.reps,
+            weight: prefill.weight,
+            isWarmup: prefill.isWarmup,
+            notes: prefill.notes,
+            context: context
+        )
+    }
+
+    @MainActor
     static func repeatLastSet(for entry: ExerciseEntry, context: ModelContext) throws -> SetEntry? {
         let orderedSets = orderedSets(for: entry)
         guard let lastSet = orderedSets.last else {
@@ -297,6 +364,40 @@ struct WorkoutSessionManager {
         context.delete(set)
         reindexSets(in: entry)
         try saveIfNeeded(context)
+    }
+
+    @MainActor
+    @discardableResult
+    static func moveSet(
+        _ set: SetEntry,
+        in entry: ExerciseEntry,
+        direction: SetMoveDirection,
+        context: ModelContext
+    ) throws -> Bool {
+        var ordered = orderedSets(for: entry)
+        guard let sourceIndex = ordered.firstIndex(where: { $0.id == set.id }) else {
+            return false
+        }
+
+        let targetIndex: Int
+        switch direction {
+        case .up:
+            targetIndex = sourceIndex - 1
+        case .down:
+            targetIndex = sourceIndex + 1
+        }
+
+        guard ordered.indices.contains(targetIndex) else {
+            return false
+        }
+
+        ordered.swapAt(sourceIndex, targetIndex)
+        for (index, item) in ordered.enumerated() {
+            item.setIndex = index + 1
+        }
+
+        try saveIfNeeded(context)
+        return true
     }
 
     @MainActor

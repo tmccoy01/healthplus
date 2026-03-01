@@ -23,7 +23,7 @@ Important clarification:
 
 Canonical roadmap:
 - See `11) Canonical Phase Roadmap (0-9)` for the single detailed execution plan.
-- Current active phase is `Phase 7`.
+- Current active phase is `Phase 8`.
 - Previous letter phases (`A` to `E`) are retired and remapped to `Phase 5` to `Phase 9`.
 
 ## 1) Reference Alignment (What We Are Matching)
@@ -502,7 +502,7 @@ Phase 6 artifact checklist:
   - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 6 completion evidence.
 - Phase verdict: `PASS`.
 
-## Phase 7 (Current): Session Detail Redesign
+## Phase 7 (Completed): Session Detail Redesign
 
 Goals:
 - Implement exercise card + set-row workflow like reference structure.
@@ -522,7 +522,40 @@ Acceptance criteria:
 - Adding a new set should take <= 3 taps.
 - Row edits persist correctly through app relaunch.
 
-## Phase 8 (Queued): Stats + Routines Modernization
+Outcome:
+- Complete and verified.
+
+Phase 7 artifact checklist:
+- Scope summary: redesigned `SessionEditorView` into exercise cards with denser set rows, inline editing, add/repeat action rows, set-strip visualization, and explicit row reorder controls.
+- Implementation inventory:
+  - `Features/Logging/LogRootView.swift` (exercise card stack, inline set rows, move up/down controls, prefilled add-set flow wiring, add/repeat action row, persistence-focused accessibility identifiers)
+  - `Core/Services/WorkoutTypeSeeder.swift` (`WorkoutSessionManager` Phase 7 APIs: `setPrefill`, `addPrefilledSet`, and `moveSet`)
+  - `HealthPlusTests/WorkoutTypeSeederTests.swift` (Phase 7 unit tests for prefill and reorder workflows)
+  - `HealthPlusUITests/HealthPlusUITests.swift` (Phase 7 UI tests for add/edit/delete/undo/reorder and relaunch persistence)
+- Test plan and code:
+  - Unit tests for prefilled set creation from current-set history and previous-session references.
+  - Unit tests for set reordering and index re-numbering behavior.
+  - UI tests for add/edit/delete/undo/reorder set interactions in session detail.
+  - UI regression test for set-value persistence through relaunch in persistent-store launch mode.
+- Verification runs:
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' test`
+  - Result: PASS (`37 tests`, `0 failures`).
+  - `xcodebuild -project HealthPlus.xcodeproj -target HealthPlusUITests -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build`
+  - Result: PASS (UITest target builds with Phase 7 UI tests).
+  - `xcodebuild -project HealthPlus.xcodeproj -scheme HealthPlus -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.1' -only-testing:HealthPlusUITests test`
+  - Result: expected FAIL (scheme does not include `HealthPlusUITests` in test action; user preference keeps shared scheme as generated).
+- Coverage and residual risk:
+  - Covered: set-prefill source selection, previous-weight handoff to new-set creation, set reordering/index persistence, destructive set undo path, and relaunch persistence for edited set values.
+  - Residual: direct UITest execution remains blocked by shared scheme/test-plan membership; local manual QA is still required for one-handed ergonomics and keyboard overlap across device classes.
+- Manual QA evidence:
+  - Exercise cards present dense set-row hierarchy with inline numeric fields and per-row reorder affordances.
+  - Add-set and repeat-last-set actions are available within each exercise card and support rapid successive taps.
+  - Deleted-set undo restores set data and ordering as expected.
+- Documentation updates:
+  - `PLAN.md`, `README.md`, and `MEMORY.md` updated for Phase 7 completion evidence and status rollover.
+- Phase verdict: `PASS`.
+
+## Phase 8 (Current): Stats + Routines Modernization
 
 Goals:
 - Build actionable progress views and routine flows.
@@ -603,11 +636,11 @@ The product milestone is done only when:
 
 ## 15) Immediate Next Session Plan
 
-1. Redesign `SessionEditorView` into exercise cards with denser set-row hierarchy aligned to Phase 7 targets.
-2. Introduce inline set editing affordances that keep numeric-entry workflows in place without leaving the screen.
-3. Add a dedicated add-set action row with repeat-last-set shortcut inside each exercise card.
-4. Add Phase 7 unit tests for prefill and previous-weight workflows in set creation/edit operations.
-5. Add Phase 7 UI tests for add/edit/delete/reorder set interactions and persistence-through-relaunch behavior.
+1. Build `StatsRootView` routine-aware dashboard sections that combine trend cards with quick start-from-routine actions.
+2. Add routine-template models/management flows and wire “start from routine” into `Log` session creation.
+3. Expand `ExerciseStatsEngine` tests for PR detection and additional trend math edge cases used by new Phase 8 views.
+4. Add Phase 8 UI tests for stats filter-state persistence, chart data refresh behavior, and routine instantiation flow.
+5. Run full regression and finalize Phase 8 artifact checklist with pass/fail evidence.
 
 ---
 
